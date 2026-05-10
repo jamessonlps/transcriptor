@@ -1,0 +1,24 @@
+[project]
+name = "transcriptor"
+version = "0.1.0"
+description = "Web app local para transcricao de videos/audios em pt-br usando faster-whisper"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "python-multipart>=0.0.12",
+    "faster-whisper>=1.0",
+    "pyannote.audio>=4.0",
+    "python-dotenv>=1.0",
+    # torch/torchaudio acompanham a versao mais recente do pyannote 4.x
+    "torch>=2.6",
+    "torchaudio>=2.6",
+    "huggingface_hub>=0.26",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["app"]
