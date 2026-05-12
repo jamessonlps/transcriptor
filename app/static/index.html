@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0a0b0f" />
     <title>Transcriptor — Transcrição local em pt-br</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+    <script src="/static/tailwind.js"></script>
     <link rel="stylesheet" href="/static/style.css" />
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+
     <script>
         tailwind.config = {
             theme: {
@@ -20,6 +20,7 @@
                     },
                     colors: {
                         ink: {
+                            950: '#06070b',
                             900: '#0a0b0f',
                             800: '#10131a',
                             700: '#161a24',
@@ -27,6 +28,7 @@
                             500: '#2a3142',
                         },
                         accent: {
+                            300: '#c4b5fd',
                             400: '#a78bfa',
                             500: '#8b5cf6',
                             600: '#7c3aed',
@@ -37,32 +39,68 @@
         };
     </script>
 </head>
-<body class="min-h-screen bg-ink-900 text-slate-100 font-sans antialiased">
+
+<body class="min-h-screen bg-ink-950 text-slate-100 font-sans antialiased">
     <div class="bg-gradient" aria-hidden="true"></div>
 
-    <header class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10 pb-4 sm:pb-6">
-        <div class="flex items-center gap-3">
-            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-accent-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-accent-500/20 shrink-0">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Top navigation -->
+    <header class="topnav">
+        <a href="#/" class="brand" data-route="/">
+            <span class="brand-mark">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
                     <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
                     <line x1="12" y1="19" x2="12" y2="23" />
                     <line x1="8" y1="23" x2="16" y2="23" />
                 </svg>
-            </div>
-            <div class="min-w-0">
-                <h1 class="text-lg sm:text-xl font-bold tracking-tight">Transcriptor</h1>
-                <p class="text-[11px] sm:text-xs text-slate-400 truncate">Transcrição local em pt-br · 100% offline · faster-whisper</p>
-            </div>
-        </div>
+            </span>
+            <span class="brand-text">
+                <span class="brand-name">Transcriptor</span>
+                <span class="brand-sub">local · pt-br · 100% offline</span>
+            </span>
+        </a>
+
+        <nav class="navtabs" aria-label="Navegação principal">
+            <a href="#/" class="navtab" data-route="/">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                </svg>
+                <span>Transcrever</span>
+            </a>
+            <a href="#/settings" class="navtab" data-route="/settings">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+                <span>Configurações</span>
+            </a>
+        </nav>
     </header>
 
-    <main class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pb-12 sm:pb-20">
+    <main id="app" class="appshell">
+        <div class="page-loading">
+            <div class="spinner"></div>
+        </div>
+    </main>
 
+    <footer class="footnote">
+        Transcriptor <span class="text-slate-700">·</span> <span data-el="footer-year"></span>
+    </footer>
+
+    <!-- Toast container -->
+    <div id="toast-stack" class="toast-stack" aria-live="polite"></div>
+
+    <!-- Modal container (in-app dialogs) -->
+    <div id="modal-root"></div>
+
+    <!-- ===================== Templates ===================== -->
+
+    <template id="tpl-transcribe">
         <!-- ETAPA 1: Upload -->
-        <section id="step-upload" class="space-y-5 sm:space-y-6">
+        <section data-step="upload" class="space-y-5 sm:space-y-6">
             <div class="text-center space-y-2 sm:space-y-3 py-4 sm:py-8">
-                <h2 class="text-3xl sm:text-4xl font-bold tracking-tight leading-tight">
+                <h2 class="hero-heading">
                     Transforme seus vídeos em
                     <span class="bg-gradient-to-r from-accent-400 to-fuchsia-400 bg-clip-text text-transparent">texto</span>
                 </h2>
@@ -71,11 +109,10 @@
                 </p>
             </div>
 
-            <!-- Drop zone -->
-            <label id="dropzone" for="file-input" class="dropzone block">
-                <input type="file" id="file-input" accept="video/*,audio/*" class="hidden" />
+            <label data-el="dropzone" class="dropzone block">
+                <input type="file" data-el="file-input" accept="video/*,audio/*" class="hidden" />
                 <div class="dropzone-content">
-                    <svg class="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-accent-400 mb-3 sm:mb-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg class="dropzone-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                         <polyline points="17 8 12 3 7 8" />
                         <line x1="12" y1="3" x2="12" y2="15" />
@@ -86,115 +123,78 @@
                 </div>
             </label>
 
-            <!-- Model picker -->
             <div class="space-y-3">
-                <div class="flex items-center justify-between gap-2 flex-wrap">
-                    <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Modelo</h3>
-                    <span class="text-[11px] sm:text-xs text-slate-500">Maior = mais preciso, mais lento</span>
+                <div class="section-header">
+                    <h3 class="section-title">Modelo</h3>
+                    <span class="section-hint">Maior = mais preciso, mais lento</span>
                 </div>
-                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2" id="model-picker">
-                    <button class="model-card" data-model="tiny" data-size="75 MB" data-speed="~10x">
-                        <span class="model-name">Tiny</span>
-                        <span class="model-meta">75 MB · ~10x</span>
-                    </button>
-                    <button class="model-card" data-model="base" data-size="140 MB" data-speed="~7x">
-                        <span class="model-name">Base</span>
-                        <span class="model-meta">140 MB · ~7x</span>
-                    </button>
-                    <button class="model-card" data-model="small" data-size="460 MB" data-speed="~4x">
-                        <span class="model-name">Small</span>
-                        <span class="model-meta">460 MB · ~4x</span>
-                    </button>
-                    <button class="model-card" data-model="medium" data-size="1.5 GB" data-speed="~2x">
-                        <span class="model-name">Medium</span>
-                        <span class="model-meta">1.5 GB · ~2x</span>
-                    </button>
-                    <button class="model-card" data-model="large-v3-turbo" data-size="1.5 GB" data-speed="~3x">
-                        <span class="model-name">Large v3 Turbo <span class="badge-new">NOVO</span></span>
-                        <span class="model-meta">1.5 GB · ~3x</span>
-                    </button>
-                    <button class="model-card active" data-model="large-v3" data-size="3 GB" data-speed="~0.7x">
-                        <span class="model-name">Large v3 <span class="badge-best">MÁX. PRECISÃO</span></span>
-                        <span class="model-meta">3 GB · ~0.7x</span>
-                    </button>
-                </div>
+                <div data-el="model-picker" class="model-grid"></div>
                 <p class="text-[11px] sm:text-xs text-slate-500">
                     "~2x" significa que processa 2 segundos de áudio por segundo de CPU. Tempos reais variam.
                 </p>
             </div>
 
-            <!-- Diarização -->
-            <div id="diarize-section" class="space-y-3">
-                <div class="card p-4 flex items-center gap-3 sm:gap-4">
+            <div class="space-y-3">
+                <div class="card p-4 flex items-center gap-3 sm:gap-4" data-el="diarize-card">
                     <label class="switch">
-                        <input type="checkbox" id="diarize-toggle" />
+                        <input type="checkbox" data-el="diarize-toggle" />
                         <span class="slider"></span>
                     </label>
                     <div class="flex-1 min-w-0">
                         <p class="font-semibold text-sm">Identificar falantes</p>
-                        <p id="diarize-help" class="text-xs text-slate-400">
+                        <p data-el="diarize-help" class="text-xs text-slate-400">
                             Marca cada trecho com [Falante 1], [Falante 2]... Útil para reuniões.
                         </p>
                     </div>
                 </div>
-                <div id="num-speakers-box" class="card p-4 hidden">
+                <div data-el="num-speakers-box" class="card p-4 hidden">
                     <label class="block">
                         <span class="text-sm font-semibold">Quantos falantes? <span class="text-slate-500 font-normal">(opcional)</span></span>
                         <p class="text-xs text-slate-400 mt-0.5 mb-2">Deixe em branco para detecção automática. Informe se souber o número exato — melhora a precisão.</p>
-                        <input
-                            type="number"
-                            id="num-speakers"
-                            min="1"
-                            max="20"
-                            placeholder="auto"
-                            class="w-32 bg-ink-700 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent-500"
-                        />
+                        <input type="number" data-el="num-speakers" min="1" max="20" placeholder="auto" class="num-input" />
                     </label>
                 </div>
             </div>
 
-            <!-- Selected file -->
-            <div id="selected-file" class="hidden card p-4 sm:p-5 flex items-center gap-3 sm:gap-4">
-                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-accent-500/20 flex items-center justify-center shrink-0">
-                    <svg class="w-5 h-5 sm:w-6 sm:h-6 text-accent-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <div data-el="selected-file" class="hidden card p-4 sm:p-5 flex items-center gap-3 sm:gap-4">
+                <div class="file-thumb">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polygon points="23 7 16 12 23 17 23 7" />
                         <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
                     </svg>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <p id="selected-name" class="font-medium truncate text-sm sm:text-base"></p>
-                    <p id="selected-size" class="text-xs text-slate-400"></p>
+                    <p data-el="selected-name" class="font-medium truncate text-sm sm:text-base"></p>
+                    <p data-el="selected-size" class="text-xs text-slate-400"></p>
                 </div>
-                <button id="clear-file" class="text-slate-500 hover:text-slate-300 transition p-1 -m-1" aria-label="Remover">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <button data-el="clear-file" class="icon-btn" aria-label="Remover">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18" />
                         <line x1="6" y1="6" x2="18" y2="18" />
                     </svg>
                 </button>
             </div>
 
-            <button id="start-btn" class="btn-primary w-full" disabled>
+            <button data-el="start-btn" class="btn-primary w-full" disabled>
                 Iniciar transcrição
             </button>
         </section>
 
-        <!-- ETAPA 2: Processando + Resultado -->
-        <section id="step-result" class="hidden space-y-4 sm:space-y-5">
-
-            <!-- Status header -->
+        <!-- ETAPA 2: Processamento + resultado -->
+        <section data-step="result" class="hidden space-y-4 sm:space-y-5">
             <div class="card p-4 sm:p-5">
                 <div class="flex items-center justify-between gap-3 sm:gap-4 flex-wrap">
                     <div class="flex items-center gap-3 min-w-0 flex-1">
-                        <div id="status-icon" class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-accent-500/20 flex items-center justify-center shrink-0">
+                        <div data-el="status-icon" class="status-icon">
                             <div class="spinner"></div>
                         </div>
                         <div class="min-w-0">
-                            <p id="status-text" class="font-semibold truncate text-sm sm:text-base">Carregando modelo…</p>
-                            <p id="status-meta" class="text-xs text-slate-400 truncate"></p>
+                            <p data-el="status-text" class="font-semibold truncate text-sm sm:text-base">Carregando modelo…</p>
+                            <p data-el="status-meta" class="text-xs text-slate-400 truncate"></p>
                         </div>
                     </div>
-                    <button id="new-btn" class="btn-ghost shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <button data-el="new-btn" class="btn-ghost shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="12" y1="5" x2="12" y2="19" />
                             <line x1="5" y1="12" x2="19" y2="12" />
                         </svg>
@@ -203,44 +203,42 @@
                 </div>
                 <div class="mt-4">
                     <div class="progress-track">
-                        <div id="progress-bar" class="progress-fill" style="width: 0%"></div>
+                        <div data-el="progress-bar" class="progress-fill" style="width: 0%"></div>
                     </div>
                     <div class="flex justify-between mt-1.5 text-xs text-slate-500">
-                        <span id="progress-current">0:00</span>
-                        <span id="progress-total">--:--</span>
+                        <span data-el="progress-current">0:00</span>
+                        <span data-el="progress-total">--:--</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Speakers detectados (renomeáveis) -->
-            <div id="speakers-bar" class="hidden card p-4">
+            <div data-el="speakers-bar" class="hidden card p-4">
                 <div class="flex items-center justify-between gap-2 mb-3 flex-wrap">
                     <p class="text-sm font-semibold">Falantes detectados</p>
                     <p class="text-[11px] sm:text-xs text-slate-500">Clique no nome para renomear</p>
                 </div>
-                <div id="speakers-list" class="flex flex-wrap gap-2"></div>
+                <div data-el="speakers-list" class="flex flex-wrap gap-2"></div>
             </div>
 
-            <!-- Action bar (download / copy / view toggle) -->
-            <div id="actions" class="hidden actions-bar">
+            <div data-el="actions" class="hidden actions-bar">
                 <div class="actions-buttons">
-                    <button id="copy-btn" class="btn-secondary">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <button data-el="copy-btn" class="btn-secondary">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
                             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                         </svg>
-                        <span id="copy-label">Copiar<span class="hidden sm:inline"> texto</span></span>
+                        <span data-el="copy-label">Copiar<span class="hidden sm:inline"> texto</span></span>
                     </button>
-                    <a id="download-txt" class="btn-secondary" download>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <a data-el="download-txt" class="btn-secondary" download>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                             <polyline points="7 10 12 15 17 10" />
                             <line x1="12" y1="15" x2="12" y2="3" />
                         </svg>
                         <span class="hidden sm:inline">Baixar </span>.txt
                     </a>
-                    <a id="download-srt" class="btn-secondary" download>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <a data-el="download-srt" class="btn-secondary" download>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                             <polyline points="7 10 12 15 17 10" />
                             <line x1="12" y1="15" x2="12" y2="3" />
@@ -254,19 +252,18 @@
                 </div>
             </div>
 
-            <!-- Transcript -->
-            <div id="transcript" class="card p-4 sm:p-6 min-h-[260px] sm:min-h-[300px]">
-                <div id="transcript-empty" class="text-center text-slate-500 py-10 sm:py-12">
+            <div data-el="transcript" class="card p-4 sm:p-6 min-h-[260px] sm:min-h-[300px]">
+                <div data-el="transcript-empty" class="text-center text-slate-500 py-10 sm:py-12">
                     <div class="spinner mx-auto mb-3"></div>
                     Aguardando primeiros segmentos…
                 </div>
-                <div id="transcript-prose" class="prose-content hidden"></div>
-                <div id="transcript-segments" class="hidden space-y-2"></div>
+                <div data-el="transcript-prose" class="prose-content hidden"></div>
+                <div data-el="transcript-segments" class="hidden space-y-2"></div>
             </div>
         </section>
 
         <!-- ETAPA 3: Erro -->
-        <section id="step-error" class="hidden card p-4 sm:p-6 border-red-500/40 bg-red-500/5">
+        <section data-step="error" class="hidden card p-4 sm:p-6 border-red-500/40 bg-red-500/5">
             <div class="flex items-start gap-3">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-red-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="10" />
@@ -275,17 +272,129 @@
                 </svg>
                 <div class="flex-1 min-w-0">
                     <p class="font-semibold text-red-300 mb-1">Algo deu errado</p>
-                    <p id="error-text" class="text-sm text-slate-400 font-mono whitespace-pre-line break-words"></p>
-                    <button id="error-retry" class="btn-ghost mt-3">Voltar</button>
+                    <p data-el="error-text" class="text-sm text-slate-400 font-mono whitespace-pre-line break-words"></p>
+                    <button data-el="error-retry" class="btn-ghost mt-3">Voltar</button>
                 </div>
             </div>
         </section>
-    </main>
+    </template>
 
-    <footer class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pb-6 sm:pb-8 text-center text-[11px] sm:text-xs text-slate-600">
-        Roda em <span class="font-mono text-slate-500">localhost</span> · faster-whisper · pt-br
-    </footer>
+    <template id="tpl-settings">
+        <section class="space-y-6">
+            <header class="space-y-2">
+                <h2 class="text-2xl sm:text-3xl font-bold tracking-tight">Configurações</h2>
+                <p class="text-sm text-slate-400">Gerencie os modelos baixados no seu disco.</p>
+            </header>
 
-    <script src="/static/app.js"></script>
+            <!-- Storage overview card -->
+            <div class="card p-5 sm:p-6">
+                <div class="storage-row">
+                    <div>
+                        <p class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Espaço usado pelos modelos</p>
+                        <p data-el="storage-total" class="text-2xl sm:text-3xl font-bold mt-1 font-mono text-slate-100">—</p>
+                        <p data-el="storage-path" class="text-[11px] text-slate-600 font-mono mt-1 break-all"></p>
+                    </div>
+                    <button data-el="refresh-btn" class="btn-ghost shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 4 23 10 17 10" />
+                            <polyline points="1 20 1 14 7 14" />
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                        </svg>
+                        <span>Atualizar</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Whisper models -->
+            <section class="space-y-3">
+                <div class="section-header">
+                    <h3 class="section-title">Modelos de Transcrição</h3>
+                    <span class="section-hint">Whisper — escolha o equilíbrio entre velocidade e precisão</span>
+                </div>
+                <div data-el="whisper-list" class="model-table">
+                    <div class="model-table-skeleton">
+                        <div class="spinner mx-auto"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Diarization models -->
+            <section class="space-y-3">
+                <div class="section-header">
+                    <h3 class="section-title">Identificação de Falantes</h3>
+                    <span class="section-hint">PyAnnote — opcional, para reuniões e entrevistas</span>
+                </div>
+                <div data-el="diarization-list" class="model-table"></div>
+                <div data-el="diarization-token-warn" class="hidden alert-warning">
+                    <strong>Token Hugging Face não configurado.</strong>
+                    Para baixar modelos da pyannote, aceite os termos em
+                    <a href="https://huggingface.co/pyannote/speaker-diarization-community-1" target="_blank" rel="noopener" class="link">huggingface.co/pyannote</a>
+                    e adicione <code>HF_TOKEN=hf_...</code> no arquivo <code>.env</code> da raiz do projeto.
+                </div>
+            </section>
+
+            <!-- About / version -->
+            <section class="card p-5 text-xs text-slate-500 space-y-1">
+                <p><strong class="text-slate-400">Transcriptor</strong> · <span data-el="app-version">v0.2.0</span></p>
+                <p>Modelos vivem em <code data-el="cache-dir" class="font-mono text-slate-400">—</code></p>
+                <p>Para desinstalar o atalho do sistema, rode <code class="font-mono text-slate-400">./installer/uninstall.sh</code> (macOS/Linux) ou o <code class="font-mono text-slate-400">uninstall.ps1</code> no Windows.</p>
+            </section>
+        </section>
+    </template>
+
+    <!-- Model row template (usado pela settings view) -->
+    <template id="tpl-model-row">
+        <div class="model-row" data-key="">
+            <div class="model-row-info">
+                <div class="model-row-name">
+                    <span data-el="label" class="model-row-label"></span>
+                    <span data-el="tag" class="model-row-tag hidden"></span>
+                </div>
+                <p data-el="description" class="model-row-desc"></p>
+                <div class="model-row-meta">
+                    <span data-el="size" class="meta-pill"></span>
+                    <span class="tooltip-wrap" data-tooltip="Velocidade aproximada de processamento. ~2x = o modelo transcreve 2 segundos de áudio por segundo de CPU. Tempos reais variam com o hardware.">
+                        <span data-el="speed" class="meta-pill"></span>
+                    </span>
+                    <span data-el="status" class="meta-pill"></span>
+                </div>
+            </div>
+            <div class="model-row-actions">
+                <button data-el="download-btn" class="btn-secondary hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    <span>Baixar</span>
+                </button>
+                <button data-el="cancel-btn" class="btn-secondary hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                    <span>Cancelar</span>
+                </button>
+                <button data-el="delete-btn" class="btn-secondary danger hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                    <span>Remover</span>
+                </button>
+            </div>
+            <div data-el="progress" class="model-row-progress hidden">
+                <div class="model-row-progress-bar">
+                    <div data-el="progress-bar" class="model-row-progress-fill"></div>
+                </div>
+                <div class="model-row-progress-text">
+                    <span data-el="progress-status">Baixando…</span>
+                    <span data-el="progress-bytes" class="font-mono"></span>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script type="module" src="/static/js/main.js"></script>
 </body>
 </html>
