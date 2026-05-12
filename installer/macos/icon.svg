@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+    <defs>
+        <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#8b5cf6"/>
+            <stop offset="100%" stop-color="#d946ef"/>
+        </linearGradient>
+        <linearGradient id="micGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+            <stop offset="100%" stop-color="#f3e8ff" stop-opacity="0.95"/>
+        </linearGradient>
+        <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="20"/>
+            <feOffset dx="0" dy="12" result="offsetblur"/>
+            <feComponentTransfer>
+                <feFuncA type="linear" slope="0.35"/>
+            </feComponentTransfer>
+            <feMerge>
+                <feMergeNode/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+    </defs>
+
+    <!-- Fundo com rounded corners (estilo macOS squircle aproximado) -->
+    <rect x="64" y="64" width="896" height="896" rx="224" ry="224" fill="url(#bgGrad)"/>
+
+    <!-- Overlay sutil para profundidade -->
+    <rect x="64" y="64" width="896" height="896" rx="224" ry="224" fill="#000000" opacity="0.08"/>
+    <rect x="64" y="64" width="896" height="448" rx="224" ry="224" fill="#ffffff" opacity="0.08"/>
+
+    <!-- Microfone -->
+    <g filter="url(#shadow)">
+        <!-- Cápsula do microfone -->
+        <rect x="416" y="256" width="192" height="384" rx="96" ry="96" fill="url(#micGrad)"/>
+
+        <!-- Arco do suporte -->
+        <path d="M 320 480 Q 320 640 512 640 Q 704 640 704 480"
+              stroke="url(#micGrad)" stroke-width="40" fill="none" stroke-linecap="round"/>
+
+        <!-- Haste vertical -->
+        <rect x="492" y="640" width="40" height="96" rx="20" fill="url(#micGrad)"/>
+
+        <!-- Base -->
+        <rect x="384" y="720" width="256" height="40" rx="20" fill="url(#micGrad)"/>
+    </g>
+
+    <!-- Ondas sonoras laterais -->
+    <g opacity="0.5">
+        <path d="M 200 420 Q 240 460 240 480 Q 240 500 200 540"
+              stroke="#ffffff" stroke-width="16" fill="none" stroke-linecap="round"/>
+        <path d="M 140 380 Q 200 440 200 480 Q 200 520 140 580"
+              stroke="#ffffff" stroke-width="16" fill="none" stroke-linecap="round" opacity="0.6"/>
+
+        <path d="M 824 420 Q 784 460 784 480 Q 784 500 824 540"
+              stroke="#ffffff" stroke-width="16" fill="none" stroke-linecap="round"/>
+        <path d="M 884 380 Q 824 440 824 480 Q 824 520 884 580"
+              stroke="#ffffff" stroke-width="16" fill="none" stroke-linecap="round" opacity="0.6"/>
+    </g>
+</svg>
