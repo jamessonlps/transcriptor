@@ -1,0 +1,60 @@
+# Tudo que não é necessário pro build da imagem.
+# Reduz o contexto enviado pro daemon do Docker (faz `docker build` muito mais
+# rápido) e evita vazar arquivos sensíveis (.env) ou pesados (modelos) na imagem.
+
+# Git / VCS
+.git/
+.gitignore
+.gitattributes
+
+# Python local
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+*.egg
+.eggs/
+build/
+dist/
+
+# Caches de ferramentas
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage*
+htmlcov/
+
+# Editores / IDEs
+.vscode/
+.idea/
+.claude/
+*.swp
+*.swo
+
+# Segredos — NUNCA copiar pra imagem.
+# Use docker-compose env_file ou -e HF_TOKEN no `docker run`.
+.env
+.env.local
+.env.*.local
+
+# Dados de runtime (vêm de volumes)
+uploads/
+outputs/
+models/
+*.log
+
+# Instaladores nativos (macOS/Linux/Windows) — irrelevantes dentro do container
+installer/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Docs / README — não são copiados pela imagem mesmo, mas explícito é melhor
+README.md
+*.md
+docs/

@@ -65,6 +65,25 @@ powershell -ExecutionPolicy Bypass -File installer\windows\uninstall.ps1 # Windo
 
 Remove só o atalho do sistema — o diretório do projeto fica intacto.
 
+### Modo 3 — Docker
+
+Sem precisar de Python ou ffmpeg no host — só Docker. A imagem é multi-stage, **torch CPU-only** (sem ~2 GB de libs CUDA) e fica em ~1.6 GB.
+
+```bash
+docker compose up -d --build
+# acesse http://localhost:8765
+```
+
+Volumes nomeados (`hf-cache`, `uploads`, `outputs`) persistem entre rebuilds — modelos baixados pela UI sobrevivem a `docker compose down`/`up`. O `.env` da raiz (se existir) é lido automaticamente pelo compose pra injetar `HF_TOKEN` no container, sem ir pra dentro da imagem.
+
+```bash
+docker compose logs -f   # acompanhar logs
+docker compose down      # parar (mantém volumes)
+docker compose down -v   # parar + apagar volumes (incluindo modelos baixados)
+```
+
+Pra trocar a porta exposta no host: `PORT=9000 docker compose up -d`.
+
 ## Como usar
 
 1. Abra `http://localhost:8765` (ou clique no ícone do app)
@@ -127,6 +146,9 @@ transcriptor/
 │   ├── macos/               # Builder do .app bundle
 │   ├── linux/               # .desktop + launcher
 │   └── windows/             # PowerShell + .vbs wrapper
+├── Dockerfile               # Multi-stage, torch CPU-only, runtime mínimo
+├── docker-compose.yml       # Volumes + env_file + healthcheck
+├── .dockerignore
 ├── pyproject.toml
 ├── run.sh
 └── README.md
@@ -149,6 +171,7 @@ Tudo o que ele cria (`.venv/`, `uploads/`, `outputs/`) fica dentro da pasta. Os 
 ## Tecnologias
 
 - **Backend:** FastAPI + Uvicorn
-- **ML:** faster-whisper (CTranslate2) + pyannote.audio
-- **Frontend:** HTML + Tailwind CSS (via CDN) + Vanilla JS modular (ES modules, zero build step)
+- **ML:** faster-whisper (CTranslate2) + pyannote.audio (torch CPU-only)
+- **Frontend:** HTML + Tailwind CSS (bundle local) + Vanilla JS modular (ES modules, zero build step)
 - **Streaming:** Server-Sent Events (SSE) para transcrição e download ao vivo
+- **Distribuição:** `run.sh` (dev) · `.app`/`.desktop`/atalho do Windows (instalador nativo) · Docker (multi-stage, ~1.6 GB)

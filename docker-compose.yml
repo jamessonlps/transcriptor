@@ -1,0 +1,50 @@
+# Transcriptor — orquestração local.
+#
+# Uso típico:
+#   docker compose up -d --build      # sobe em background
+#   docker compose logs -f            # acompanha logs
+#   docker compose down               # encerra
+#   docker compose down -v            # encerra + apaga volumes (cuidado: limpa modelos)
+#
+# Diarização (opcional): exporte HF_TOKEN no shell ou crie um .env na raiz do
+# projeto com HF_TOKEN=hf_xxx — o compose pega automaticamente.
+
+services:
+  transcriptor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: transcriptor:latest
+    container_name: transcriptor
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8765}:8765"
+    environment:
+      # Token do HuggingFace pra diarização (vazio = diarização desativada na UI).
+      HF_TOKEN: ${HF_TOKEN:-}
+      # Override opcional do nº de threads do CTranslate2.
+      # Default (auto): cores - 2, clamp [4,8].
+      WHISPER_CPU_THREADS: ${WHISPER_CPU_THREADS:-}
+    volumes:
+      # Modelos do HuggingFace — volume nomeado pra sobreviver a rebuilds da
+      # imagem e poder ser compartilhado entre versões.
+      - hf-cache:/data/huggingface
+      # Uploads e transcrições — volumes nomeados para isolamento; troque por
+      # bind mounts (ex.: ./uploads:/app/uploads) se quiser acessar do host.
+      - uploads:/app/uploads
+      - outputs:/app/outputs
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys;sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8765/api/health',timeout=3).status==200 else 1)"
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+volumes:
+  hf-cache:
+  uploads:
+  outputs:
