@@ -28,6 +28,12 @@ from .diarizer import (  # noqa: E402
     assign_speakers_to_segments,
     diarize,
 )
+from .models import (  # noqa: E402
+    delete_model,
+    download_model,
+    list_models,
+    summary_line,
+)
 from .transcriber import transcribe_stream  # noqa: E402
 
 logging.basicConfig(
@@ -166,6 +172,7 @@ def config() -> dict[str, Any]:
     return {
         "diarization_available": bool(os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_TOKEN")),
         "models": sorted(ALLOWED_MODELS),
+        "version": "0.2.0",
     }
 
 
@@ -314,3 +321,70 @@ def download(task_id: str, fmt: str, labels: str = "") -> Any:
 @app.get("/api/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+# ============================================================================
+# Gestão de modelos (download / listar / remover)
+# ============================================================================
+
+# Locks de download por chave de modelo — impede que duas requests simultâneas
+# tentem baixar o mesmo modelo (geraria conflito no cache do HF).
+_DOWNLOAD_LOCKS: dict[str, threading.Lock] = {}
+_DOWNLOAD_LOCKS_GUARD = threading.Lock()
+
+
+def _get_download_lock(key: str) -> threading.Lock:
+    with _DOWNLOAD_LOCKS_GUARD:
+        if key not in _DOWNLOAD_LOCKS:
+            _DOWNLOAD_LOCKS[key] = threading.Lock()
+        return _DOWNLOAD_LOCKS[key]
+
+
+@app.get("/api/models")
+def models_list() -> dict[str, Any]:
+    """Retorna o catálogo completo de modelos com status de cada um."""
+    return list_models()
+
+
+@app.get("/api/models/summary")
+def models_summary() -> dict[str, str]:
+    return {"summary": summary_line()}
+
+
+@app.get("/api/models/{key}/download")
+def models_download(key: str) -> StreamingResponse:
+    """Baixa um modelo emitindo progresso via SSE.
+
+    GET (não POST) porque EventSource só suporta GET. Idempotente do ponto de
+    vista do cache: se já está em disco, snapshot_download é praticamente um
+    no-op (~50ms verificando hash).
+    """
+    lock = _get_download_lock(key)
+    if not lock.acquire(blocking=False):
+        raise HTTPException(409, f"Download de '{key}' já em andamento.")
+
+    def gen():
+        try:
+            for event in download_model(key):
+                yield _sse_format(event)
+        finally:
+            lock.release()
+
+    return StreamingResponse(
+        gen(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
+    )
+
+
+@app.delete("/api/models/{key}")
+def models_delete(key: str) -> dict[str, Any]:
+    """Remove o cache do modelo do disco (e da RAM se aplicável)."""
+    try:
+        return delete_model(key)
+    except KeyError as e:
+        raise HTTPException(404, str(e)) from None

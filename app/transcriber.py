@@ -95,6 +95,26 @@ def get_model(
         return _CURRENT_MODEL
 
 
+def evict_if_matches(size: ModelSize) -> bool:
+    """Descarrega o modelo em RAM se for o de chave ``size``.
+
+    Necessário antes de remover o cache de disco: senão o modelo continuaria
+    "vivo" em memória e a chamada DELETE aparenta sucesso mas a próxima
+    inferência ainda funcionaria por inércia.
+
+    Retorna True se algo foi evictado.
+    """
+    global _CURRENT_MODEL, _CURRENT_KEY
+    with _MODEL_LOCK:
+        if _CURRENT_KEY is not None and _CURRENT_KEY[0] == size:
+            logger.info("Evictando modelo %s da RAM (delete request)", size)
+            _CURRENT_MODEL = None
+            _CURRENT_KEY = None
+            gc.collect()
+            return True
+    return False
+
+
 def format_timestamp(seconds: float) -> str:
     """Formato SRT: HH:MM:SS,mmm."""
     ms = int(round(seconds * 1000))
