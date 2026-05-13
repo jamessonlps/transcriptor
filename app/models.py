@@ -22,7 +22,11 @@ from pathlib import Path
 from typing import Any
 
 from huggingface_hub import HfApi, scan_cache_dir, snapshot_download
-from huggingface_hub.utils import HfHubHTTPError
+from huggingface_hub.utils import (
+    GatedRepoError,
+    HfHubHTTPError,
+    RepositoryNotFoundError,
+)
 
 from . import transcriber
 
@@ -54,7 +58,10 @@ WHISPER_MODELS: list[ModelSpec] = [
               460, "~4x", "Boa qualidade pra fala limpa, ainda rápido."),
     ModelSpec("medium", "Medium", "Systran/faster-whisper-medium", "whisper",
               1500, "~2x", "Sweet spot pra pt-br — recomendado pra reuniões."),
-    ModelSpec("large-v3-turbo", "Large v3 Turbo", "Systran/faster-whisper-large-v3-turbo",
+    # mobiuslabsgmbh republica o turbo em formato CT2 (faster-whisper). O repo
+    # original Systran/faster-whisper-large-v3-turbo deixou de existir; este e
+    # publico, MIT, ~1M downloads/mes.
+    ModelSpec("large-v3-turbo", "Large v3 Turbo", "mobiuslabsgmbh/faster-whisper-large-v3-turbo",
               "whisper", 1500, "~3x", "Qualidade próxima do Large v3, ~2x mais rápido."),
     ModelSpec("large-v3", "Large v3", "Systran/faster-whisper-large-v3", "whisper",
               3000, "~0.7x", "Máxima precisão. Precisa de ~3 GB de RAM livres.",
@@ -244,6 +251,8 @@ def download_model(key: str, max_workers: int = 4) -> Iterator[dict[str, Any]]:
 
     yield {"type": "start", "model": spec.key, "label": spec.label, "size_mb": spec.size_mb}
 
+    # error_holder guarda mensagem + categoria pro frontend rotear o erro
+    # corretamente (ex.: "no_token" / "no_access" abrem o wizard em Configuracoes).
     error_holder: dict[str, str] = {}
 
     def _do_download() -> None:
@@ -253,17 +262,44 @@ def download_model(key: str, max_workers: int = 4) -> Iterator[dict[str, Any]]:
                 tqdm_class=_SilentTqdm,
                 max_workers=max_workers,
             )
+        except GatedRepoError:
+            # Conta nao aceitou os termos do modelo gated. Mais comum nos pyannote.
+            error_holder["error"] = (
+                f"Acesso negado a {spec.repo_id}. Faca login com a mesma conta "
+                f"do token e aceite os termos em https://huggingface.co/{spec.repo_id}."
+            )
+            error_holder["kind"] = "no_access"
+            error_holder["repo_id"] = spec.repo_id
+        except RepositoryNotFoundError:
+            # Pode ser repo inexistente OU repo privado sem acesso (HF retorna 404
+            # em ambos pra nao vazar a existencia de repos privados).
+            error_holder["error"] = (
+                f"Modelo {spec.repo_id} nao encontrado ou inacessivel. Verifique "
+                f"o token e se aceitou os termos em https://huggingface.co/{spec.repo_id}."
+            )
+            error_holder["kind"] = "not_found"
+            error_holder["repo_id"] = spec.repo_id
         except HfHubHTTPError as e:
-            msg = f"Erro HTTP: {e}"
-            if "401" in str(e) or "403" in str(e):
-                msg = (
-                    "Acesso negado ao Hugging Face. Para modelos da pyannote, "
-                    "aceite os termos em https://huggingface.co/{} e configure "
-                    "HF_TOKEN no arquivo .env."
-                ).format(spec.repo_id)
-            error_holder["error"] = msg
+            s = str(e)
+            if "401" in s:
+                error_holder["error"] = (
+                    "Token Hugging Face invalido ou ausente. Abra Configuracoes "
+                    "para corrigir."
+                )
+                error_holder["kind"] = "no_token"
+            elif "403" in s:
+                error_holder["error"] = (
+                    f"Acesso negado a {spec.repo_id}. Aceite os termos em "
+                    f"https://huggingface.co/{spec.repo_id}."
+                )
+                error_holder["kind"] = "no_access"
+                error_holder["repo_id"] = spec.repo_id
+            else:
+                error_holder["error"] = f"Erro HTTP: {e}"
+                error_holder["kind"] = "http_error"
         except Exception as e:
             error_holder["error"] = f"{type(e).__name__}: {e}"
+            error_holder["kind"] = "error"
 
     target = _repo_dir(spec.repo_id)
     total_estimate_bytes = spec.size_mb * 1024 * 1024
@@ -299,7 +335,12 @@ def download_model(key: str, max_workers: int = 4) -> Iterator[dict[str, Any]]:
     thread.join()
 
     if "error" in error_holder:
-        yield {"type": "error", "message": error_holder["error"]}
+        event: dict[str, Any] = {"type": "error", "message": error_holder["error"]}
+        if error_holder.get("kind"):
+            event["error_kind"] = error_holder["kind"]
+        if error_holder.get("repo_id"):
+            event["repo_id"] = error_holder["repo_id"]
+        yield event
         return
 
     final_size = _dir_size_bytes(target)

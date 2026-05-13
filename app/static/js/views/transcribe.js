@@ -290,11 +290,18 @@ export async function mount(container, { config }) {
                 if (state.eventSource) state.eventSource.close();
                 el('status-text', root).textContent = 'Transcrição concluída (sem identificação de falantes)';
                 el('status-meta', root).textContent = `Falha na diarização: ${event.message}`;
+                // Diarização falhou mid-stream — mostra um toast com CTA.
+                if (/token|acesso|autoriza|aceit/i.test(event.message)) {
+                    toast(
+                        `${event.message} Configure o token em Configurações.`,
+                        { type: 'error', timeout: 9000 }
+                    );
+                }
                 break;
             case 'error':
                 state.streamFinished = true;
                 if (state.eventSource) state.eventSource.close();
-                showError(event.message);
+                showError(event.message, { kind: event.error_kind });
                 break;
         }
     }
@@ -503,13 +510,43 @@ export async function mount(container, { config }) {
         el('start-btn', root).disabled = true;
         el('start-btn', root).textContent = 'Iniciar transcrição';
         el('status-icon', root).innerHTML = '<div class="spinner"></div>';
+        // Reset visuals do step de erro (sem isso o título/CTA do erro anterior
+        // pode "vazar" pra próxima execução).
+        const ctaBtn = el('error-settings', root);
+        if (ctaBtn) hide(ctaBtn);
     }
 
-    function showError(msg) {
+    function showError(msg, { kind = null } = {}) {
         hide(stepEl('result'));
         hide(stepEl('upload'));
         show(stepEl('error'));
         el('error-text', root).textContent = msg;
+
+        // Customiza o título + CTA conforme o tipo de erro. Os kinds vêm do
+        // backend (models.py) quando falhas de auth são identificadas.
+        const titleEl = el('error-title', root);
+        const ctaBtn = el('error-settings', root);
+        const ctaLabel = el('error-settings-label', root);
+
+        if (kind === 'no_token') {
+            titleEl.textContent = 'Token Hugging Face não configurado';
+            ctaLabel.textContent = 'Configurar token';
+            show(ctaBtn);
+        } else if (kind === 'no_access') {
+            titleEl.textContent = 'Você ainda não tem acesso a esse modelo';
+            ctaLabel.textContent = 'Resolver em Configurações';
+            show(ctaBtn);
+        } else {
+            // Heurística: se a mensagem fala de token/diarização, ainda dá um botão.
+            if (/token|hugging\s*face|diariza/i.test(msg || '')) {
+                titleEl.textContent = 'Algo deu errado';
+                ctaLabel.textContent = 'Abrir Configurações';
+                show(ctaBtn);
+            } else {
+                titleEl.textContent = 'Algo deu errado';
+                hide(ctaBtn);
+            }
+        }
     }
 
     // Cleanup ao trocar de rota

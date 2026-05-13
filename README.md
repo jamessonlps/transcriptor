@@ -106,19 +106,27 @@ A página **Configurações** (link no canto superior direito) permite:
 - ver quanto disco os modelos estão ocupando
 - baixar modelos antecipadamente (com barra de progresso ao vivo)
 - remover modelos que você não usa mais
-- baixar o modelo de diarização (pyannote) — requer `HF_TOKEN` no `.env`
+- configurar o token Hugging Face (com wizard de setup) e ver o status de acesso a cada modelo gated
+- baixar o modelo de diarização (pyannote) após o token estar configurado
 
 ## Identificação de falantes (diarização)
 
-Requer um token do Hugging Face com aceite dos termos da pyannote:
+A página **Configurações** tem um wizard que guia o setup. Resumo do que ele cobre:
 
-1. Crie um token em https://huggingface.co/settings/tokens (leitura pública é o suficiente)
-2. Aceite os termos em https://huggingface.co/pyannote/speaker-diarization-community-1
-3. Crie um arquivo `.env` na raiz do projeto:
-   ```
-   HF_TOKEN=hf_seu_token_aqui
-   ```
-4. Reinicie o servidor
+1. Crie uma conta gratuita em https://huggingface.co/join (se ainda não tem)
+2. Gere um token de leitura em https://huggingface.co/settings/tokens (tipo "Read")
+3. Aceite os termos em https://huggingface.co/pyannote/speaker-diarization-community-1
+   usando a **mesma conta** do token
+4. Cole o token no campo de **Configurações → Hugging Face → Salvar token**
+
+O token é salvo em `~/.cache/transcriptor/config.json` (permissão `0600`, só seu usuário lê) e tem efeito imediato — sem reiniciar o servidor.
+
+Alternativa: setar `HF_TOKEN=hf_xxx` num arquivo `.env` na raiz do projeto (modo legado). Vale lembrar que o token salvo pela UI tem prioridade sobre o `.env` — se você remover o token pela UI e tiver um `.env`, voltamos automaticamente pro valor do `.env`.
+
+A UI distingue três falhas comuns e mostra orientação específica em cada uma:
+- **Token ausente** → wizard aberto com instruções passo a passo
+- **Token inválido/revogado** → pede pra gerar um novo
+- **Token válido, mas conta não aceitou os termos do modelo** → link direto pra página de termos com o botão "Aceitar termos"
 
 ## Estrutura
 

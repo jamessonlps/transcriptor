@@ -101,7 +101,7 @@
         <section data-step="upload" class="space-y-5 sm:space-y-6">
             <div class="text-center space-y-2 sm:space-y-3 py-4 sm:py-8">
                 <h2 class="hero-heading">
-                    Transforme seus vídeos em
+                    Transforme seus áudios e vídeos em
                     <span class="bg-gradient-to-r from-accent-400 to-fuchsia-400 bg-clip-text text-transparent">texto</span>
                 </h2>
                 <p class="text-sm sm:text-base text-slate-400 max-w-xl mx-auto">
@@ -271,9 +271,18 @@
                     <line x1="12" y1="16" x2="12.01" y2="16" />
                 </svg>
                 <div class="flex-1 min-w-0">
-                    <p class="font-semibold text-red-300 mb-1">Algo deu errado</p>
+                    <p data-el="error-title" class="font-semibold text-red-300 mb-1">Algo deu errado</p>
                     <p data-el="error-text" class="text-sm text-slate-400 font-mono whitespace-pre-line break-words"></p>
-                    <button data-el="error-retry" class="btn-ghost mt-3">Voltar</button>
+                    <div class="flex flex-wrap gap-2 mt-3">
+                        <a data-el="error-settings" href="#/settings" data-route="/settings" class="btn-primary hidden">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="3" />
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                            </svg>
+                            <span data-el="error-settings-label">Abrir Configurações</span>
+                        </a>
+                        <button data-el="error-retry" class="btn-ghost">Voltar</button>
+                    </div>
                 </div>
             </div>
         </section>
@@ -318,6 +327,145 @@
                 </div>
             </section>
 
+            <!-- Hugging Face token -->
+            <section class="space-y-3">
+                <div class="section-header">
+                    <h3 class="section-title">Hugging Face</h3>
+                    <span class="section-hint">Token de autenticação para download dos modelos</span>
+                </div>
+                <div data-el="hf-card" class="card hf-card">
+                    <!-- Status row (header) -->
+                    <div class="hf-status" data-el="hf-status-row">
+                        <div data-el="hf-status-badge" class="hf-status-badge state-loading">
+                            <div class="spinner"></div>
+                        </div>
+                        <div class="hf-status-text">
+                            <p data-el="hf-status-title" class="hf-status-title">Verificando token…</p>
+                            <p data-el="hf-status-detail" class="hf-status-detail">Consultando huggingface.co — geralmente leva 1 a 2 segundos.</p>
+                        </div>
+                        <button data-el="hf-toggle-edit" type="button" class="btn-ghost hidden">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                            </svg>
+                            <span>Trocar</span>
+                        </button>
+                    </div>
+
+                    <!-- Skeleton durante o whoami inicial: card nao fica "vazio" enquanto espera -->
+                    <div data-el="hf-loading-skeleton" class="hf-loading-skeleton" aria-hidden="true">
+                        <div class="hf-skeleton-row">
+                            <span class="hf-skeleton-circle"></span>
+                            <div class="hf-skeleton-text">
+                                <span class="hf-skeleton-line" style="width: 55%"></span>
+                                <span class="hf-skeleton-line short" style="width: 35%"></span>
+                            </div>
+                            <span class="hf-skeleton-pill"></span>
+                        </div>
+                        <div class="hf-skeleton-row">
+                            <span class="hf-skeleton-circle"></span>
+                            <div class="hf-skeleton-text">
+                                <span class="hf-skeleton-line" style="width: 45%"></span>
+                                <span class="hf-skeleton-line short" style="width: 28%"></span>
+                            </div>
+                            <span class="hf-skeleton-pill"></span>
+                        </div>
+                    </div>
+
+                    <!-- Setup wizard (steps + input) -->
+                    <div data-el="hf-wizard" class="hf-wizard hidden">
+                        <ol class="hf-steps">
+                            <li class="hf-step">
+                                <span class="hf-step-num">1</span>
+                                <div class="hf-step-body">
+                                    <p class="hf-step-title">Crie sua conta no Hugging Face</p>
+                                    <p class="hf-step-desc">
+                                        É gratuita. Pule esta etapa se você já tem uma.
+                                        <a href="https://huggingface.co/join" target="_blank" rel="noopener" class="link">Criar conta →</a>
+                                    </p>
+                                </div>
+                            </li>
+                            <li class="hf-step">
+                                <span class="hf-step-num">2</span>
+                                <div class="hf-step-body">
+                                    <p class="hf-step-title">Gere um token de leitura</p>
+                                    <p class="hf-step-desc">
+                                        Vá em <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener" class="link">huggingface.co/settings/tokens</a>,
+                                        clique em <code>+ New token</code>, escolha o tipo <strong>Read</strong> e copie o token (começa com <code>hf_</code>).
+                                    </p>
+                                </div>
+                            </li>
+                            <li class="hf-step">
+                                <span class="hf-step-num">3</span>
+                                <div class="hf-step-body">
+                                    <p class="hf-step-title">Aceite os termos dos modelos protegidos</p>
+                                    <p class="hf-step-desc">
+                                        Os modelos abaixo são <em>gated</em>: cada um exige um clique único em "Agree and access" usando a <strong>mesma conta</strong> do token. Sem isso o download falha mesmo com token válido.
+                                    </p>
+                                    <div data-el="hf-access-list-wizard" class="hf-access-list"></div>
+                                </div>
+                            </li>
+                            <li class="hf-step">
+                                <span class="hf-step-num">4</span>
+                                <div class="hf-step-body">
+                                    <p class="hf-step-title">Cole o token aqui</p>
+                                    <div class="hf-input-row">
+                                        <div class="hf-input-wrap">
+                                            <input data-el="hf-input" type="password" autocomplete="off" spellcheck="false" placeholder="hf_xxxxxxxxxxxxxxxxxxxxxxxxx" class="hf-input" />
+                                            <button data-el="hf-toggle-vis" type="button" class="hf-input-eye" aria-label="Mostrar/esconder token">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                                    <circle cx="12" cy="12" r="3" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <button data-el="hf-save" type="button" class="btn-primary hf-save" disabled>
+                                            <span data-el="hf-save-label">Salvar token</span>
+                                        </button>
+                                    </div>
+                                    <p data-el="hf-input-msg" class="hf-input-msg hidden"></p>
+                                    <p class="hf-input-help">
+                                        O token é salvo em <code data-el="hf-config-path">~/.cache/transcriptor/config.json</code> com permissão restrita ao seu usuário. Nada vai pra nuvem.
+                                    </p>
+                                </div>
+                            </li>
+                        </ol>
+                        <button data-el="hf-cancel-edit" type="button" class="btn-ghost hf-cancel-edit hidden">Cancelar edição</button>
+                    </div>
+
+                    <!-- Access list (compact, when token is configured) -->
+                    <div data-el="hf-access-section" class="hf-access-section hidden">
+                        <div class="hf-access-header">
+                            <p class="hf-access-title">Acesso aos modelos protegidos</p>
+                            <button data-el="hf-recheck" type="button" class="btn-ghost">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="23 4 23 10 17 10" />
+                                    <polyline points="1 20 1 14 7 14" />
+                                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                                </svg>
+                                <span>Verificar de novo</span>
+                            </button>
+                        </div>
+                        <div data-el="hf-access-list" class="hf-access-list"></div>
+                    </div>
+
+                    <!-- Remove token (footer, when configured) -->
+                    <div data-el="hf-footer" class="hf-footer hidden">
+                        <p class="hf-footer-meta">
+                            <span data-el="hf-source-label" class="hf-source-pill"></span>
+                            <span data-el="hf-masked" class="font-mono"></span>
+                        </p>
+                        <button data-el="hf-delete" type="button" class="btn-ghost danger">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
+                            <span>Remover token</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
             <!-- Diarization models -->
             <section class="space-y-3">
                 <div class="section-header">
@@ -327,9 +475,7 @@
                 <div data-el="diarization-list" class="model-table"></div>
                 <div data-el="diarization-token-warn" class="hidden alert-warning">
                     <strong>Token Hugging Face não configurado.</strong>
-                    Para baixar modelos da pyannote, aceite os termos em
-                    <a href="https://huggingface.co/pyannote/speaker-diarization-community-1" target="_blank" rel="noopener" class="link">huggingface.co/pyannote</a>
-                    e adicione <code>HF_TOKEN=hf_...</code> no arquivo <code>.env</code> da raiz do projeto.
+                    Configure-o na seção acima para baixar os modelos de diarização.
                 </div>
             </section>
 
@@ -340,6 +486,30 @@
                 <p>Para desinstalar o atalho do sistema, rode <code class="font-mono text-slate-400">./installer/uninstall.sh</code> (macOS/Linux) ou o <code class="font-mono text-slate-400">uninstall.ps1</code> no Windows.</p>
             </section>
         </section>
+    </template>
+
+    <!-- HF access row template (lista do wizard + da seção compacta) -->
+    <template id="tpl-hf-access-row">
+        <div class="hf-access-row" data-repo-id="">
+            <div class="hf-access-info">
+                <span data-el="state-icon" class="hf-access-icon"></span>
+                <div class="hf-access-text">
+                    <p data-el="label" class="hf-access-label"></p>
+                    <p data-el="repo-id" class="hf-access-repo"></p>
+                </div>
+            </div>
+            <div class="hf-access-actions">
+                <span data-el="status" class="hf-access-status"></span>
+                <a data-el="open-terms" target="_blank" rel="noopener" class="btn-secondary hf-access-link hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                        <polyline points="15 3 21 3 21 9" />
+                        <line x1="10" y1="14" x2="21" y2="3" />
+                    </svg>
+                    <span>Aceitar termos</span>
+                </a>
+            </div>
+        </div>
     </template>
 
     <!-- Model row template (usado pela settings view) -->

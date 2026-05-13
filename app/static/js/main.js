@@ -6,21 +6,24 @@ import { mount as mountTranscribe } from './views/transcribe.js';
 import { mount as mountSettings } from './views/settings.js';
 import { toast } from './ui.js';
 
-async function boot() {
-    let config = null;
+// Re-fetch da config a cada navegação: estado do token pode ter mudado em
+// Configurações e queremos refletir isso em Transcrever sem reload.
+async function fetchConfig() {
     try {
-        config = await getConfig();
+        return await getConfig();
     } catch (err) {
-        // Não é fatal — algumas views podem funcionar sem config; outras vão pedir.
         toast(`Não foi possível conectar ao servidor: ${err.message}`,
             { type: 'error', timeout: 8000 });
+        return null;
     }
+}
 
+async function boot() {
     const footerYear = document.querySelector('[data-el="footer-year"]');
     if (footerYear) footerYear.textContent = String(new Date().getFullYear());
 
-    register('/', (container) => mountTranscribe(container, { config }));
-    register('/settings', (container) => mountSettings(container, { config }));
+    register('/', async (container) => mountTranscribe(container, { config: await fetchConfig() }));
+    register('/settings', async (container) => mountSettings(container, { config: await fetchConfig() }));
 
     start();
 }

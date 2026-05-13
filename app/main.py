@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import queue
 import shutil
 import threading
@@ -13,14 +12,24 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+import requests
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 
 BASE_DIR = Path(__file__).parent
 # Carrega .env da raiz do projeto (apps/transcriptor/.env)
 load_dotenv(BASE_DIR.parent / ".env")
+
+from . import diarizer as _diarizer_mod  # noqa: E402
+from . import token_store  # noqa: E402
+
+# Initialize token store *depois* do load_dotenv: assim ele faz snapshot do
+# token que veio do .env e pode sobrescrever em RAM com o token que o usuario
+# salvou pela UI (se houver).
+token_store.initialize()
 
 from .diarizer import (  # noqa: E402
     DiarizationUnavailable,
@@ -29,6 +38,7 @@ from .diarizer import (  # noqa: E402
     diarize,
 )
 from .models import (  # noqa: E402
+    DIARIZATION_MODELS,
     delete_model,
     download_model,
     list_models,
@@ -168,12 +178,217 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.get("/api/config")
 def config() -> dict[str, Any]:
-    """Indica ao frontend quais features estao disponiveis."""
+    """Indica ao frontend quais features estao disponiveis.
+
+    ``diarization_available`` so reflete "tem token configurado". A validade
+    real (token aceito + termos aceitos por repo) e checada em /api/hf/status
+    e /api/hf/access — chamadas mais pesadas, feitas sob demanda.
+    """
     return {
-        "diarization_available": bool(os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_TOKEN")),
+        "diarization_available": bool(token_store.get_token()),
         "models": sorted(ALLOWED_MODELS),
         "version": "0.2.0",
     }
+
+
+# ============================================================================
+# Hugging Face token: status, set, delete, model access check
+# ============================================================================
+
+
+class _TokenPayload(BaseModel):
+    """Body de POST /api/hf/token."""
+
+    token: str
+
+
+# Timeout curto: a UI espera de forma sincrona, entao loading "eterno" e
+# inaceitavel. 8s cobre conexoes lentas e ainda fica abaixo do limite onde o
+# usuario comeca a se perguntar se a app travou.
+_HF_API_BASE = "https://huggingface.co"
+_HF_API_TIMEOUT = 8.0
+
+
+def _hf_whoami(token: str) -> dict[str, Any]:
+    """Chama whoami diretamente via requests com timeout.
+
+    Nao usamos ``HfApi.whoami()`` porque ele nao expoe ``timeout`` e fica
+    pendurado indefinidamente quando o HF esta lento/offline.
+    """
+    try:
+        resp = requests.get(
+            f"{_HF_API_BASE}/api/whoami-v2",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=_HF_API_TIMEOUT,
+        )
+    except requests.Timeout:
+        raise HTTPException(
+            504,
+            f"Hugging Face nao respondeu em {_HF_API_TIMEOUT:.0f}s. "
+            "Verifique sua conexao com a internet e tente novamente.",
+        ) from None
+    except requests.RequestException as e:
+        raise HTTPException(
+            502,
+            f"Falha conectando ao Hugging Face: {type(e).__name__}.",
+        ) from None
+    if resp.status_code in (401, 403):
+        raise HTTPException(
+            401,
+            "Token rejeitado pelo Hugging Face. Verifique se copiou o token "
+            "completo e se ele ainda esta ativo em huggingface.co/settings/tokens.",
+        ) from None
+    if not resp.ok:
+        raise HTTPException(
+            resp.status_code,
+            f"Hugging Face retornou HTTP {resp.status_code}.",
+        ) from None
+    try:
+        return resp.json()
+    except ValueError:
+        raise HTTPException(500, "Resposta invalida do Hugging Face.") from None
+
+
+def _hf_check_repo_access(token: str, repo_id: str) -> str | None:
+    """Retorna a ``reason`` se o repo nao for acessivel; ``None`` se for.
+
+    Chamamos diretamente o endpoint REST do HF com timeout para evitar que a
+    pagina de configuracoes trave esperando.
+    """
+    try:
+        resp = requests.get(
+            f"{_HF_API_BASE}/api/models/{repo_id}",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=_HF_API_TIMEOUT,
+        )
+    except requests.Timeout:
+        return "timeout"
+    except requests.RequestException:
+        return "network_error"
+    if resp.ok:
+        return None
+    if resp.status_code == 401:
+        return "unauthorized"
+    # HF retorna 403 (gated) ou 404 (existente mas oculto para esse token).
+    # Tratamos ambos como "gated" — a acao do usuario e a mesma: aceitar termos.
+    if resp.status_code in (403, 404):
+        return "gated"
+    logger.warning("HTTP %s checando acesso a %s", resp.status_code, repo_id)
+    return "http_error"
+
+
+@app.get("/api/hf/status")
+def hf_status() -> dict[str, Any]:
+    """Estado atual do token: configurado? valido? quem? de onde vem?
+
+    Faz uma chamada whoami() no HF — pode levar 200-800ms. Nao cacheamos:
+    o usuario costuma chamar este endpoint depois de mudar algo (salvar token,
+    aceitar termos), e queremos refletir o estado atual.
+    """
+    token = token_store.get_token()
+    source = token_store.get_source()
+    payload: dict[str, Any] = {
+        "configured": bool(token),
+        "valid": None,
+        "source": source,
+        "username": None,
+        "masked": token_store.mask(token) if token else None,
+        "error": None,
+        "config_path": str(token_store.CONFIG_FILE),
+    }
+    if not token:
+        return payload
+    try:
+        info = _hf_whoami(token)
+        payload["valid"] = True
+        payload["username"] = info.get("name") or info.get("fullname")
+    except HTTPException as e:
+        # whoami falhou -> token presente mas invalido. Nao propagamos o erro
+        # como HTTP; retornamos no payload pra UI poder mostrar o estado real.
+        payload["valid"] = False
+        payload["error"] = e.detail
+    return payload
+
+
+@app.post("/api/hf/token")
+def hf_set_token(payload: _TokenPayload) -> dict[str, Any]:
+    """Recebe um token, valida via whoami(), persiste e atualiza o ambiente."""
+    raw = (payload.token or "").strip()
+    if not raw:
+        raise HTTPException(400, "Campo 'token' e obrigatorio.")
+    if not raw.startswith("hf_"):
+        raise HTTPException(400, "Token Hugging Face deve comecar com 'hf_'.")
+    if any(c.isspace() for c in raw):
+        raise HTTPException(400, "Token nao pode conter espacos ou quebras de linha.")
+
+    info = _hf_whoami(raw)
+
+    try:
+        token_store.set_token(raw)
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from None
+
+    # Reset do pipeline pyannote — sem isso a proxima diarizacao usaria o
+    # token antigo carregado em RAM.
+    _diarizer_mod.reset_pipeline()
+
+    return {
+        "configured": True,
+        "valid": True,
+        "source": token_store.get_source(),
+        "username": info.get("name") or info.get("fullname"),
+        "masked": token_store.mask(raw),
+    }
+
+
+@app.delete("/api/hf/token")
+def hf_delete_token() -> dict[str, Any]:
+    """Remove o token salvo. Se havia um token no .env, voltamos pra ele."""
+    token_store.delete_token()
+    _diarizer_mod.reset_pipeline()
+    new_token = token_store.get_token()
+    return {
+        "removed": True,
+        "configured": bool(new_token),
+        "source": token_store.get_source(),
+        "masked": token_store.mask(new_token) if new_token else None,
+    }
+
+
+@app.get("/api/hf/access")
+def hf_access() -> dict[str, Any]:
+    """Verifica acesso aos repos gated necessarios para o app.
+
+    Esses sao os repos do pyannote (atualmente apenas
+    pyannote/speaker-diarization-community-1). Para cada um:
+      - 200 -> usuario aceitou os termos
+      - 403/404 -> termos nao aceitos (tratado como "gated")
+      - 401 -> token invalido
+      - timeout/erro -> reportado pra UI conseguir mostrar feedback util
+    """
+    token = token_store.get_token()
+    has_token = bool(token)
+
+    items: list[dict[str, Any]] = []
+    for spec in DIARIZATION_MODELS:
+        item: dict[str, Any] = {
+            "key": spec.key,
+            "repo_id": spec.repo_id,
+            "label": spec.label,
+            "url": f"https://huggingface.co/{spec.repo_id}",
+            "accessible": False,
+            "reason": None,
+        }
+        if not has_token:
+            item["reason"] = "no_token"
+        else:
+            reason = _hf_check_repo_access(token, spec.repo_id)
+            if reason is None:
+                item["accessible"] = True
+            else:
+                item["reason"] = reason
+        items.append(item)
+    return {"models": items, "has_token": has_token}
 
 
 @app.post("/api/transcribe")
@@ -189,6 +404,14 @@ async def start_transcribe(
         raise HTTPException(400, "Arquivo sem nome.")
     if num_speakers is not None and num_speakers < 1:
         num_speakers = None  # 0 ou negativo = auto-detect
+    if diarize and not token_store.get_token():
+        # Falha cedo (antes de aceitar o upload). Sem isso o erro so apareceria
+        # no meio do streaming, depois do upload completo — UX ruim.
+        raise HTTPException(
+            400,
+            "Diarizacao requer um token Hugging Face. Configure-o em "
+            "Configuracoes (link no menu superior).",
+        )
 
     task_id = uuid.uuid4().hex
     safe_name = Path(file.filename).name

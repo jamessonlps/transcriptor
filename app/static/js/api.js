@@ -1,14 +1,31 @@
 // Thin wrapper sobre fetch() — concentra tratamento de erro e SSE.
 
-async function _request(url, opts = {}) {
+async function _request(url, { timeoutMs, ...opts } = {}) {
     let res;
+    // AbortController como defesa: se o servidor estiver pendurado por algum
+    // motivo (rede sumindo no meio, processo travado), evita loading eterno na UI.
+    let ctrl = null;
+    let timer = null;
+    if (timeoutMs && typeof AbortController !== 'undefined') {
+        ctrl = new AbortController();
+        timer = setTimeout(() => ctrl.abort(), timeoutMs);
+        opts.signal = ctrl.signal;
+    }
     try {
         res = await fetch(url, opts);
     } catch (netErr) {
+        if (ctrl && ctrl.signal.aborted) {
+            throw new Error(
+                `O servidor não respondeu em ${(timeoutMs / 1000).toFixed(0)}s. ` +
+                `Tente novamente.`
+            );
+        }
         throw new Error(
             `Não foi possível contatar o servidor (${netErr.message}).\n` +
             `Verifique se o Transcriptor está rodando.`
         );
+    } finally {
+        if (timer) clearTimeout(timer);
     }
     if (!res.ok) {
         let detail = `HTTP ${res.status}`;
@@ -33,6 +50,36 @@ export async function listModels() {
 
 export async function deleteModel(key) {
     const r = await _request(`/api/models/${encodeURIComponent(key)}`, { method: 'DELETE' });
+    return r.json();
+}
+
+// ---------- Hugging Face token & access ----------
+
+// Backend ja tem timeout de ~8s por chamada HF. 20s aqui cobre o pior caso
+// (status + access do mesmo endpoint, com folga) sem deixar o usuario esperando.
+const HF_TIMEOUT_MS = 20_000;
+
+export async function getHfStatus() {
+    const r = await _request('/api/hf/status', { timeoutMs: HF_TIMEOUT_MS });
+    return r.json();
+}
+
+export async function setHfToken(token) {
+    const r = await _request('/api/hf/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+    });
+    return r.json();
+}
+
+export async function deleteHfToken() {
+    const r = await _request('/api/hf/token', { method: 'DELETE' });
+    return r.json();
+}
+
+export async function getHfAccess() {
+    const r = await _request('/api/hf/access', { timeoutMs: HF_TIMEOUT_MS });
     return r.json();
 }
 

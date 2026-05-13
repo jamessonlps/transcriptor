@@ -27,6 +27,8 @@ from pathlib import Path
 from threading import Lock
 from typing import Any
 
+from . import token_store
+
 logger = logging.getLogger(__name__)
 
 DIARIZATION_MODEL = "pyannote/speaker-diarization-community-1"
@@ -85,21 +87,38 @@ class DiarizationUnavailable(Exception):
     """Token HF ausente, modelo nao aceito, ou pyannote nao instalado."""
 
 
+def reset_pipeline() -> None:
+    """Limpa o cache do pipeline carregado em RAM.
+
+    Chamado quando o token HF muda na UI — sem isso, a proxima diarizacao
+    reusaria o pipeline antigo (carregado com o token anterior) e a mudanca
+    nao teria efeito ate o servidor reiniciar.
+    """
+    global _PIPELINE
+    with _PIPELINE_LOCK:
+        if _PIPELINE is not None:
+            logger.info("Pipeline pyannote descarregado (token HF mudou)")
+        _PIPELINE = None
+
+
 def get_pipeline() -> Any:
     """Carrega (e cacheia) o pipeline pyannote community-1.
 
-    Requer HF_TOKEN no env e termos aceitos em:
-      - huggingface.co/pyannote/speaker-diarization-community-1
-      - huggingface.co/pyannote/segmentation-3.0 (dependencia)
+    Requer um token Hugging Face valido (via UI em Configuracoes ou variavel
+    HF_TOKEN) e que a conta dona do token tenha aceito os termos em
+    huggingface.co/pyannote/speaker-diarization-community-1.
     """
     global _PIPELINE
     with _PIPELINE_LOCK:
         if _PIPELINE is not None:
             return _PIPELINE
 
-        token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_TOKEN")
+        token = token_store.get_token()
         if not token:
-            raise DiarizationUnavailable("Token HuggingFace ausente. Crie um arquivo .env com HF_TOKEN=hf_...")
+            raise DiarizationUnavailable(
+                "Token Hugging Face nao configurado. Abra Configuracoes e "
+                "cole seu token (gratuito em huggingface.co/settings/tokens)."
+            )
 
         try:
             from pyannote.audio import Pipeline
@@ -110,10 +129,22 @@ def get_pipeline() -> Any:
         try:
             pipe = Pipeline.from_pretrained(DIARIZATION_MODEL, token=token)
         except Exception as e:
+            msg = str(e)
+            # Mensagens diferentes pra cada causa — ajuda o usuario a entender
+            # o que ele precisa corrigir.
+            if "401" in msg or "Unauthorized" in msg.lower():
+                raise DiarizationUnavailable(
+                    "Token Hugging Face invalido. Abra Configuracoes para "
+                    "atualizar o token."
+                ) from e
+            if "403" in msg or "gated" in msg.lower() or "access" in msg.lower():
+                raise DiarizationUnavailable(
+                    f"Acesso negado a {DIARIZATION_MODEL}. Faca login com a "
+                    f"mesma conta do token e aceite os termos em "
+                    f"https://huggingface.co/{DIARIZATION_MODEL}."
+                ) from e
             raise DiarizationUnavailable(
-                f"Falha ao carregar pipeline. Aceite os termos em "
-                f"huggingface.co/{DIARIZATION_MODEL.replace('pyannote/', 'pyannote/')} "
-                f"e huggingface.co/pyannote/segmentation-3.0. Erro: {e}"
+                f"Falha ao carregar pipeline ({type(e).__name__}: {e})."
             ) from e
 
         # Acelera com Apple Silicon (MPS) ou GPU se disponivel.
