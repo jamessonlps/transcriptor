@@ -1,8 +1,8 @@
 # Transcriptor
 
-> Web app local para transcrição de vídeos e áudios em pt-br. Tudo roda no
-> seu computador — nada vai pra nuvem. Stack: FastAPI + faster-whisper +
-> pyannote, com streaming SSE e identificação de falantes em paralelo na GPU.
+> Local web app for transcribing audio and video. Everything runs on your
+> machine — nothing leaves your computer. FastAPI + faster-whisper +
+> pyannote, with live streaming and optional speaker identification.
 
 [![CI](https://github.com/jamessonfelipe/transcriptor/actions/workflows/ci.yml/badge.svg)](https://github.com/jamessonfelipe/transcriptor/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)](https://www.python.org)
@@ -10,287 +10,192 @@
 [![100% local](https://img.shields.io/badge/100%25-local-success)](#)
 [![Docker ready](https://img.shields.io/badge/Docker-ready-2496ED)](./Dockerfile)
 
-🇬🇧 English version: [`README-en.md`](./README-en.md)
+## What it does
 
-<!-- TODO: substituir por GIF/screenshot do fluxo principal -->
-<!-- ![Transcriptor — drag-drop → live transcript → diarisation](docs/img/demo.gif) -->
+- **Transcribes** audio and video (`mp4`, `mov`, `mkv`, `mp3`, `wav`,
+  `m4a`, `webm`, …) using `faster-whisper`. Default language is
+  Brazilian Portuguese; other languages work too.
+- **Identifies speakers** (optional) via `pyannote.audio` 4 — tags each
+  segment with `[Speaker 1]`, `[Speaker 2]`, …
+- **Streams results live** over Server-Sent Events. You read text as
+  it's produced; you don't wait for the whole file.
+- **Manages models** from the UI — see disk usage, download with a live
+  progress bar, delete.
+- **Runs everywhere offline**: native (`./run.sh`), installed as a
+  desktop app, or in Docker (~1.6 GB CPU-only image).
 
-## O que é
+## How it works
 
-- 🎙️ Transcrição de qualquer áudio ou vídeo (mp4, mov, mp3, wav, m4a, webm…) em
-    português-brasileiro usando `faster-whisper` (CTranslate2, int8 na CPU).
-- 👥 Identificação de falantes (diarização) opcional via `pyannote.audio` 4,
-    rodando **em paralelo** com a transcrição (MPS no Apple Silicon, CUDA no
-    NVIDIA, CPU se nada estiver disponível).
-- 🌊 Streaming SSE — os segmentos aparecem na tela conforme são produzidos, não
-    no fim.
-- 💾 Gestão de modelos pela UI: ver disco usado, baixar com barra de progresso
-    ao vivo, deletar.
-- 🔐 Token Hugging Face gerenciado pela própria app (persiste em
-    `~/.cache/transcriptor/config.json` com modo `0600`, validação por whoami,
-    setup wizard pra modelos gated).
-- 🐳 Roda nativamente, como app instalado (.app/.desktop/.lnk), ou em Docker
-    (~1.6 GB CPU-only).
-
-## Por que vale a leitura técnica
-
-Este projeto é tão sobre **engenharia** quanto sobre o produto. Os pontos
-mais interessantes pra revisar:
-
-- **`app/services/transcription_worker.py`** — paralelismo CPU/GPU entre os
-    dois modelos, com tratamento explícito dos modos de falha. ~25-40% mais
-    rápido em arquivos longos com diarização (vs sequencial). Veja
-    [ADR-0004](./docs/adr/0004-parallel-transcribe-diarise.md).
-- **`app/services/task_manager.py`** — registry em memória com **TTL +
-    capacidade**. Substitui um `dict` global que não evictava nada e vazava
-    RAM em sessões longas. Coberto por
-    [`tests/test_task_manager.py`](./tests/test_task_manager.py).
-- **`app/transcriber.py`** — cache single-slot com eviction explícita, pra
-    permitir trocar de `medium` (1.5 GB) pra `large-v3` (3 GB) em máquinas com
-    8 GB de RAM. [ADR-0002](./docs/adr/0002-whisper-model-eviction.md).
-- **`app/static/js/views/transcribe.js`** — vanilla JS sem framework, mas
-    com separação clara entre state machine (`class State extends EventTarget`)
-    e camada de render (funções puras `render*`). Vanilla-JS flavor de Flux,
-    sem dependências.
-- **SSE em vez de WebSocket** — racional em
-    [ADR-0001](./docs/adr/0001-sse-over-websockets.md).
-- **Zero build step no frontend** — racional em
-    [ADR-0003](./docs/adr/0003-no-build-step.md).
-
-Documentação técnica completa em [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).
-
-## Pré-requisitos
-
-- Python 3.10+
-- ffmpeg
-    - macOS: `brew install ffmpeg`
-    - Ubuntu/Debian: `sudo apt install ffmpeg`
-    - Windows: baixe em https://ffmpeg.org/download.html
-
-### Aceleração por GPU (opcional)
-
-A app detecta o hardware sozinha. O ícone no canto superior direito mostra
-em tempo real onde a inferência está rodando — clique pra ver detalhes
-(GPU, precisão, motivo).
-
-| OS | Hardware | Transcrição (Whisper) | Diarização (pyannote) |
-|----|----------|----------------------|----------------------|
-| Linux/Windows | NVIDIA + CUDA | **GPU** (auto) | **GPU** (auto) |
-| macOS | Apple Silicon | CPU (CTranslate2 não suporta Metal) | **GPU MPS** (auto) |
-| Qualquer | sem GPU | CPU | CPU |
-
-**Windows/Linux com GPU NVIDIA:** instale o extra `[gpu]` pra puxar as libs
-CUDA sem precisar do CUDA Toolkit do sistema:
-
-```bash
-pip install -e ".[gpu]"
+```
+   upload  →  Whisper (CPU or CUDA)  ──┐
+                                       ├─► merge by overlap  →  SSE stream  →  UI
+            pyannote (CPU/CUDA/MPS) ──┘            (live)
 ```
 
-Drivers NVIDIA atualizados são suficientes. Override manual via env:
+The two models run **in parallel** when diarization is enabled —
+Whisper on CPU/CUDA, pyannote on whatever GPU is available. Wall-clock
+time becomes `max(transcribe, diarize)` instead of the sum
+(~25–40% faster on long files). Details:
+[`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) and the
+[ADRs](./docs/adr/).
+
+A badge in the top-right of the UI shows where inference is running
+(`CPU`, `Apple Silicon GPU`, or the NVIDIA GPU name). Click it for
+details per engine.
+
+## Quick start
+
+You need **Python 3.10+** and **ffmpeg**.
+
+### macOS
 
 ```bash
-TRANSCRIPTOR_DEVICE=cpu                  # força CPU mesmo com GPU
-TRANSCRIPTOR_DEVICE=cuda                 # exige GPU (falha back pra CPU se ausente)
-TRANSCRIPTOR_COMPUTE=int8_float16        # GPUs com pouca VRAM (<6GB)
-TRANSCRIPTOR_COMPUTE=float16             # default em GPU
+brew install ffmpeg
+./run.sh                       # boots on http://localhost:8765
+./installer/install.sh         # optional: install as Launchpad app
 ```
 
-**Ganho típico** vs CPU int8 no mesmo modelo `large-v3`:
-- RTX 3060+ com `float16`: **5–10×** mais rápido.
-- RTX 4070+ com `int8_float16`: similar, mas usa **~40% menos VRAM**.
-
-## Como rodar
-
-### Modo 1 — Linha de comando
+### Linux
 
 ```bash
+sudo apt install ffmpeg        # or dnf/pacman equivalent
 ./run.sh
+./installer/install.sh         # optional: install as .desktop entry
 ```
 
-O script é idempotente: cria o virtualenv, instala dependências (só na
-primeira vez) e sobe o servidor em `http://localhost:8765`.
+### Windows
 
-Para usar outra porta:
+Install ffmpeg from <https://ffmpeg.org/download.html> and make sure
+`ffmpeg` is on `PATH`, then:
 
-```bash
-PORT=9000 ./run.sh
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -e .
+uvicorn app.main:app --host 127.0.0.1 --port 8765
 ```
 
-### Modo 2 — Instalar como app no sistema
-
-Cria um ícone no Launchpad/Menu Iniciar/Aplicações que sobe o servidor sem
-terminal visível e abre o navegador automaticamente.
-
-**macOS:**
-
-```bash
-./installer/install.sh
-```
-
-Cria `~/Applications/Transcriptor.app`. Abra pelo Spotlight
-(`Cmd+Space → Transcriptor`) ou pelo Launchpad. Quando você "sair" (Cmd+Q no
-Dock), o servidor encerra junto.
-
-**Linux:**
-
-```bash
-./installer/install.sh
-```
-
-Cria `~/.local/share/applications/transcriptor.desktop`. Abra pelo menu de
-aplicativos da sua distro. O ícone usa o SVG embarcado — se quiser que o
-ícone seja gerado, tenha `rsvg-convert`, `inkscape` ou `imagemagick`
-instalado.
-
-**Windows (PowerShell):**
+Optional native shortcut (no console window, auto-opens browser):
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File installer\windows\install.ps1
-# com atalho na Área de Trabalho:
-powershell -ExecutionPolicy Bypass -File installer\windows\install.ps1 -Desktop
 ```
 
-Cria um atalho no Menu Iniciar (e opcionalmente na Área de Trabalho) que
-invoca um `.vbs` wrapper — a janela do CMD nunca aparece.
-
-**Desinstalar:**
+### Docker (any OS)
 
 ```bash
-./installer/uninstall.sh                                                 # macOS/Linux
-powershell -ExecutionPolicy Bypass -File installer\windows\uninstall.ps1 # Windows
+docker compose up -d --build   # http://localhost:8765
 ```
 
-Remove só o atalho do sistema — o diretório do projeto fica intacto.
+Multi-stage build, CPU-only Torch (~1.6 GB). Named volumes persist
+models across `down`/`up`. `PORT=9000 docker compose up -d` to change
+the host port.
 
-### Modo 3 — Docker
+## GPU acceleration
 
-Sem precisar de Python ou ffmpeg no host — só Docker. A imagem é multi-stage,
-**torch CPU-only** (sem ~2 GB de libs CUDA) e fica em ~1.6 GB.
+The app auto-detects available hardware on boot. No flags needed for
+the common cases.
+
+| Platform | Transcription (Whisper) | Diarization (pyannote) |
+|---|---|---|
+| **Windows / Linux + NVIDIA** | GPU (CUDA, automatic) | GPU (CUDA, automatic) |
+| **macOS (Apple Silicon)** | CPU* | GPU (MPS, automatic) |
+| **No GPU** | CPU | CPU |
+
+\* `faster-whisper` is built on CTranslate2, which has no Metal/MPS
+backend. The Mac GPU is used for diarization but not transcription. See
+[Limitations](#limitations).
+
+### Enabling CUDA on Windows/Linux
 
 ```bash
-docker compose up -d --build
-# acesse http://localhost:8765
+pip install -e ".[gpu]"        # pulls cuBLAS + cuDNN via pip
 ```
 
-Volumes nomeados (`hf-cache`, `uploads`, `outputs`) persistem entre rebuilds —
-modelos baixados pela UI sobrevivem a `docker compose down`/`up`. O `.env` da
-raiz (se existir) é lido automaticamente pelo compose pra injetar `HF_TOKEN`
-no container, sem ir pra dentro da imagem.
+You don't need the CUDA Toolkit installed — recent NVIDIA drivers are
+enough. Typical speedup vs CPU `int8` on `large-v3`: **5–10× faster**.
+
+### Overrides (environment variables)
 
 ```bash
-docker compose logs -f   # acompanhar logs
-docker compose down      # parar (mantém volumes)
-docker compose down -v   # parar + apagar volumes (incluindo modelos baixados)
+TRANSCRIPTOR_DEVICE=cpu|cuda         # force a device (default: auto)
+TRANSCRIPTOR_COMPUTE=float16|int8_float16|int8   # override precision
+WHISPER_CPU_THREADS=8                # CPU thread count
 ```
 
-Pra trocar a porta exposta no host: `PORT=9000 docker compose up -d`.
+Use `int8_float16` on GPUs with <6 GB VRAM running `large-v3`.
 
-## Como usar
+## Speaker identification
 
-1. Abra `http://localhost:8765` (ou clique no ícone do app)
-2. Arraste um vídeo/áudio na zona de upload
-3. Escolha o modelo (o ponto verde mostra quais já estão baixados):
-     - **Tiny / Base / Small** — rápidos, qualidade aceitável
-     - **Medium** — sweet spot pra pt-br
-     - **Large v3 Turbo** — qualidade próxima do Large v3, ~2x mais rápido
-     - **Large v3** — qualidade máxima, ~3x mais lento
-4. (Opcional) Ative **Identificar falantes** para marcar trechos com
-     [Falante 1], [Falante 2]...
-5. Clique em "Iniciar transcrição" — os segmentos aparecem ao vivo
-6. Quando terminar: copie o texto, baixe `.txt` ou `.srt`
+Diarization requires a free Hugging Face token (the model is gated).
+**Settings → Hugging Face** in the UI walks you through it:
 
-Se você escolher um modelo ainda não baixado, ele é baixado automaticamente no
-primeiro uso (~75 MB a 3 GB, ficam em `~/.cache/huggingface/`).
+1. Create an account at <https://huggingface.co/join>.
+2. Generate a read token at <https://huggingface.co/settings/tokens>.
+3. Accept the terms at
+   <https://huggingface.co/pyannote/speaker-diarization-community-1>
+   with the **same account**.
+4. Paste the token in Settings → Save.
 
-## Identificação de falantes (diarização)
+The token is stored in `~/.cache/transcriptor/config.json` (mode
+`0600`). Alternatively, set `HF_TOKEN=hf_xxx` in a `.env` file.
 
-A página **Configurações** tem um wizard que guia o setup. Resumo:
-
-1. Crie uma conta gratuita em https://huggingface.co/join
-2. Gere um token de leitura em https://huggingface.co/settings/tokens
-3. Aceite os termos em
-     https://huggingface.co/pyannote/speaker-diarization-community-1
-     usando a **mesma conta** do token
-4. Cole o token no campo de **Configurações → Hugging Face → Salvar token**
-
-O token é salvo em `~/.cache/transcriptor/config.json` (permissão `0600`) e
-tem efeito imediato — sem reiniciar o servidor.
-
-Alternativa: setar `HF_TOKEN=hf_xxx` num arquivo `.env`. O token salvo pela
-UI tem prioridade; remover pela UI volta automaticamente pro `.env`.
-
-## Desenvolvimento
+## Development
 
 ```bash
-git clone https://github.com/jamessonfelipe/transcriptor.git
-cd transcriptor
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 
-pytest                      # 90+ tests, <1s
-ruff check . && mypy app    # lint + typecheck
+pytest                         # ~100 tests, <2s
+ruff check . && mypy app       # lint + typecheck
 ```
 
-Detalhes em [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+CI runs the same on every push. See [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
-## Estrutura
+## Project structure
 
 ```
 transcriptor/
 ├── app/
-│   ├── main.py                    # FastAPI factory (mounts static + routers)
-│   ├── routers/                   # HTTP layer (health, hf, transcribe, models)
-│   ├── services/                  # Orchestration (task_manager, hf_client, ...)
-│   ├── domain/                    # Pure data structures (Task)
-│   ├── transcriber.py             # faster-whisper wrapper
-│   ├── diarizer.py                # pyannote 4 wrapper
-│   ├── models.py                  # Model catalog + download/delete
-│   ├── token_store.py             # HF token persistence
-│   └── static/                    # SPA (no build step)
-│       ├── index.html
-│       ├── css/                   # base, layout, components
-│       └── js/                    # main, router, api, ui, components, views
-├── tests/                         # pytest — 90+ tests
-├── docs/
-│   ├── ARCHITECTURE.md            # System design
-│   └── adr/                       # Architecture Decision Records
-├── installer/                     # macOS .app, Linux .desktop, Windows .vbs
-├── .github/workflows/ci.yml       # Ruff + mypy + pytest + docker build
-├── Dockerfile                     # Multi-stage, CPU-only Torch
-├── docker-compose.yml             # Volumes + healthcheck
-├── pyproject.toml                 # Project metadata + dev extras
-├── ruff.toml                      # Lint + format config
-└── mypy.ini                       # Type-check config
+│   ├── main.py                # FastAPI factory
+│   ├── routers/               # HTTP (health, hf, transcribe, models)
+│   ├── services/              # Orchestration (task manager, runtime, ...)
+│   ├── domain/                # Pure data structures
+│   ├── transcriber.py         # faster-whisper wrapper + device detection
+│   ├── diarizer.py            # pyannote 4 wrapper
+│   ├── models.py              # Model catalog + download/delete
+│   ├── token_store.py         # HF token persistence
+│   └── static/                # SPA (HTML + vanilla JS, no build step)
+├── tests/                     # pytest
+├── docs/                      # ARCHITECTURE.md + ADRs
+├── installer/                 # macOS / Linux / Windows installers
+├── Dockerfile                 # Multi-stage, CPU-only Torch
+└── docker-compose.yml
 ```
 
-## Mover para outro lugar
+## Limitations
 
-A pasta é totalmente self-contained:
+- **Mac GPU for transcription** is not supported. CTranslate2 has no
+  Metal backend, so Whisper runs on CPU on Apple Silicon. Diarization
+  uses the Mac GPU via MPS without issues.
+- **Single user, single machine.** No auth, no multi-tenancy. By
+  design — this is a local tool.
+- **Models are large.** `large-v3` is ~3 GB on disk + ~6 GB VRAM in
+  `float16`. Pick a smaller model on constrained hardware.
+- **Diarization needs a Hugging Face token.** Free, but it's an extra
+  step (gated model).
 
-```bash
-cp -r transcriptor /destino/qualquer/
-cd /destino/qualquer/transcriptor
-./run.sh
-# Se você tinha instalado como app, reinstale apontando pro novo caminho:
-./installer/install.sh
-```
+## Roadmap
 
-Tudo o que ele cria (`.venv/`, `uploads/`, `outputs/`) fica dentro da pasta.
-Os modelos baixados ficam em `~/.cache/huggingface/` (compartilhado entre
-instâncias).
+- [ ] Optional `mlx-whisper` backend for true Apple Silicon GPU
+      transcription (~2–4× faster than CPU on M-series).
+- [ ] Chunked parallel transcription for very long files (>1 h).
+- [ ] Word-level timestamps in the SRT export.
+- [ ] Optional translation pass (target-language output).
+- [ ] Batch mode (drop a folder, transcribe all).
 
-## Tecnologias
+Issues and PRs welcome.
 
-- **Backend:** FastAPI + Uvicorn, threading-based task management.
-- **ML:** `faster-whisper` (CTranslate2) + `pyannote.audio` 4 (torch
-    CPU-only no Docker; MPS/CUDA detectado no host).
-- **Frontend:** HTML + Tailwind CDN JIT + Vanilla JS modular (ES modules,
-    zero build step).
-- **Streaming:** Server-Sent Events para transcrição e download ao vivo.
-- **Distribuição:** `run.sh` (dev) · `.app`/`.desktop`/atalho do Windows
-    (instalador nativo) · Docker multi-stage.
-- **Qualidade:** Ruff + mypy + pytest (90+ tests), CI no GitHub Actions.
-
-## Licença
+## License
 
 [MIT](./LICENSE).
