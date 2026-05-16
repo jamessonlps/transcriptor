@@ -1,5 +1,7 @@
 // UI utilities: query selectors data-attr-aware, formatters, toasts.
 
+import { hydrateIcons } from './components/icons.js';
+
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
@@ -73,7 +75,11 @@ export function toast(message, { type = 'info', timeout = 4000 } = {}) {
 export function cloneTemplate(templateId) {
     const tpl = document.getElementById(templateId);
     if (!tpl) throw new Error(`Template não encontrado: ${templateId}`);
-    return tpl.content.cloneNode(true);
+    const frag = tpl.content.cloneNode(true);
+    // Templates declare icons via ``data-icon="name"`` placeholders. We
+    // hydrate them here so callers don't have to remember to do it.
+    hydrateIcons(frag);
+    return frag;
 }
 
 // ------- Modal (confirmation dialog) -------

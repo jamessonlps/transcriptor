@@ -46,14 +46,7 @@
     <!-- Top navigation -->
     <header class="topnav">
         <a href="#/" class="brand" data-route="/">
-            <span class="brand-mark">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                    <line x1="12" y1="19" x2="12" y2="23" />
-                    <line x1="8" y1="23" x2="16" y2="23" />
-                </svg>
-            </span>
+            <span class="brand-mark" data-icon="mic"></span>
             <span class="brand-text">
                 <span class="brand-name">Transcriptor</span>
                 <span class="brand-sub">local · pt-br · 100% offline</span>
@@ -62,17 +55,11 @@
 
         <nav class="navtabs" aria-label="Navegação principal">
             <a href="#/" class="navtab" data-route="/">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                </svg>
+                <span data-icon="mic"></span>
                 <span>Transcrever</span>
             </a>
             <a href="#/settings" class="navtab" data-route="/settings">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="3" />
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                </svg>
+                <span data-icon="settings"></span>
                 <span>Configurações</span>
             </a>
         </nav>
@@ -112,11 +99,7 @@
             <label data-el="dropzone" class="dropzone block">
                 <input type="file" data-el="file-input" accept="video/*,audio/*" class="hidden" />
                 <div class="dropzone-content">
-                    <svg class="dropzone-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="17 8 12 3 7 8" />
-                        <line x1="12" y1="3" x2="12" y2="15" />
-                    </svg>
+                    <span class="dropzone-icon" data-icon="upload"></span>
                     <p class="text-base sm:text-lg font-semibold mb-1">Arraste seu arquivo aqui</p>
                     <p class="text-sm text-slate-400">ou <span class="text-accent-400 font-medium">clique para selecionar</span></p>
                     <p class="text-[11px] sm:text-xs text-slate-500 mt-3 px-2">.mp4 · .mov · .mkv · .mp3 · .wav · .m4a · .webm</p>
@@ -157,22 +140,12 @@
             </div>
 
             <div data-el="selected-file" class="hidden card p-4 sm:p-5 flex items-center gap-3 sm:gap-4">
-                <div class="file-thumb">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="23 7 16 12 23 17 23 7" />
-                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-                    </svg>
-                </div>
+                <div class="file-thumb" data-icon="video"></div>
                 <div class="flex-1 min-w-0">
                     <p data-el="selected-name" class="font-medium truncate text-sm sm:text-base"></p>
                     <p data-el="selected-size" class="text-xs text-slate-400"></p>
                 </div>
-                <button data-el="clear-file" class="icon-btn" aria-label="Remover">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                </button>
+                <button data-el="clear-file" class="icon-btn" aria-label="Remover" data-icon="close"></button>
             </div>
 
             <button data-el="start-btn" class="btn-primary w-full" disabled>
@@ -194,10 +167,7 @@
                         </div>
                     </div>
                     <button data-el="new-btn" class="btn-ghost shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="12" y1="5" x2="12" y2="19" />
-                            <line x1="5" y1="12" x2="19" y2="12" />
-                        </svg>
+                        <span data-icon="plus"></span>
                         Nova
                     </button>
                 </div>
@@ -223,26 +193,15 @@
             <div data-el="actions" class="hidden actions-bar">
                 <div class="actions-buttons">
                     <button data-el="copy-btn" class="btn-secondary">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                        </svg>
+                        <span data-icon="copy"></span>
                         <span data-el="copy-label">Copiar<span class="hidden sm:inline"> texto</span></span>
                     </button>
                     <a data-el="download-txt" class="btn-secondary" download>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                            <polyline points="7 10 12 15 17 10" />
-                            <line x1="12" y1="15" x2="12" y2="3" />
-                        </svg>
+                        <span data-icon="download"></span>
                         <span class="hidden sm:inline">Baixar </span>.txt
                     </a>
                     <a data-el="download-srt" class="btn-secondary" download>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                            <polyline points="7 10 12 15 17 10" />
-                            <line x1="12" y1="15" x2="12" y2="3" />
-                        </svg>
+                        <span data-icon="download"></span>
                         <span class="hidden sm:inline">Baixar </span>.srt
                     </a>
                 </div>
@@ -265,20 +224,13 @@
         <!-- ETAPA 3: Erro -->
         <section data-step="error" class="hidden card p-4 sm:p-6 border-red-500/40 bg-red-500/5">
             <div class="flex items-start gap-3">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-red-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="8" x2="12" y2="12" />
-                    <line x1="12" y1="16" x2="12.01" y2="16" />
-                </svg>
+                <span class="error-icon w-6 h-6 text-red-400 shrink-0" data-icon="info"></span>
                 <div class="flex-1 min-w-0">
                     <p data-el="error-title" class="font-semibold text-red-300 mb-1">Algo deu errado</p>
                     <p data-el="error-text" class="text-sm text-slate-400 font-mono whitespace-pre-line break-words"></p>
                     <div class="flex flex-wrap gap-2 mt-3">
                         <a data-el="error-settings" href="#/settings" data-route="/settings" class="btn-primary hidden">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="3" />
-                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                            </svg>
+                            <span data-icon="settings"></span>
                             <span data-el="error-settings-label">Abrir Configurações</span>
                         </a>
                         <button data-el="error-retry" class="btn-ghost">Voltar</button>
@@ -304,11 +256,7 @@
                         <p data-el="storage-path" class="text-[11px] text-slate-600 font-mono mt-1 break-all"></p>
                     </div>
                     <button data-el="refresh-btn" class="btn-ghost shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="23 4 23 10 17 10" />
-                            <polyline points="1 20 1 14 7 14" />
-                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-                        </svg>
+                        <span data-icon="refresh"></span>
                         <span>Atualizar</span>
                     </button>
                 </div>
@@ -344,10 +292,7 @@
                             <p data-el="hf-status-detail" class="hf-status-detail">Consultando huggingface.co — geralmente leva 1 a 2 segundos.</p>
                         </div>
                         <button data-el="hf-toggle-edit" type="button" class="btn-ghost hidden">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                            </svg>
+                            <span data-icon="edit"></span>
                             <span>Trocar</span>
                         </button>
                     </div>
@@ -412,12 +357,7 @@
                                     <div class="hf-input-row">
                                         <div class="hf-input-wrap">
                                             <input data-el="hf-input" type="password" autocomplete="off" spellcheck="false" placeholder="hf_xxxxxxxxxxxxxxxxxxxxxxxxx" class="hf-input" />
-                                            <button data-el="hf-toggle-vis" type="button" class="hf-input-eye" aria-label="Mostrar/esconder token">
-                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                                    <circle cx="12" cy="12" r="3" />
-                                                </svg>
-                                            </button>
+                                            <button data-el="hf-toggle-vis" type="button" class="hf-input-eye" aria-label="Mostrar/esconder token" data-icon="eye"></button>
                                         </div>
                                         <button data-el="hf-save" type="button" class="btn-primary hf-save" disabled>
                                             <span data-el="hf-save-label">Salvar token</span>
@@ -438,11 +378,7 @@
                         <div class="hf-access-header">
                             <p class="hf-access-title">Acesso aos modelos protegidos</p>
                             <button data-el="hf-recheck" type="button" class="btn-ghost">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="23 4 23 10 17 10" />
-                                    <polyline points="1 20 1 14 7 14" />
-                                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-                                </svg>
+                                <span data-icon="refresh"></span>
                                 <span>Verificar de novo</span>
                             </button>
                         </div>
@@ -456,10 +392,7 @@
                             <span data-el="hf-masked" class="font-mono"></span>
                         </p>
                         <button data-el="hf-delete" type="button" class="btn-ghost danger">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="3 6 5 6 21 6" />
-                                <path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                            </svg>
+                            <span data-icon="trash"></span>
                             <span>Remover token</span>
                         </button>
                     </div>
@@ -481,7 +414,7 @@
 
             <!-- About / version -->
             <section class="card p-5 text-xs text-slate-500 space-y-1">
-                <p><strong class="text-slate-400">Transcriptor</strong> · <span data-el="app-version">v0.2.0</span></p>
+                <p><strong class="text-slate-400">Transcriptor</strong> · <span data-el="app-version">—</span></p>
                 <p>Modelos vivem em <code data-el="cache-dir" class="font-mono text-slate-400">—</code></p>
                 <p>Para desinstalar o atalho do sistema, rode <code class="font-mono text-slate-400">./installer/uninstall.sh</code> (macOS/Linux) ou o <code class="font-mono text-slate-400">uninstall.ps1</code> no Windows.</p>
             </section>
@@ -501,11 +434,7 @@
             <div class="hf-access-actions">
                 <span data-el="status" class="hf-access-status"></span>
                 <a data-el="open-terms" target="_blank" rel="noopener" class="btn-secondary hf-access-link hidden">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                        <polyline points="15 3 21 3 21 9" />
-                        <line x1="10" y1="14" x2="21" y2="3" />
-                    </svg>
+                    <span data-icon="externalLink"></span>
                     <span>Aceitar termos</span>
                 </a>
             </div>
@@ -531,25 +460,15 @@
             </div>
             <div class="model-row-actions">
                 <button data-el="download-btn" class="btn-secondary hidden">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
+                    <span data-icon="download"></span>
                     <span>Baixar</span>
                 </button>
                 <button data-el="cancel-btn" class="btn-secondary hidden">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
+                    <span data-icon="close"></span>
                     <span>Cancelar</span>
                 </button>
                 <button data-el="delete-btn" class="btn-secondary danger hidden">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="3 6 5 6 21 6" />
-                        <path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                    </svg>
+                    <span data-icon="trash"></span>
                     <span>Remover</span>
                 </button>
             </div>
