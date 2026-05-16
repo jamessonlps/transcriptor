@@ -21,9 +21,11 @@ ENV/
 .env.local
 .env.*.local
 
-# App data
-uploads/
-outputs/
+# App data (keep the directories themselves — see .gitkeep)
+uploads/*
+outputs/*
+!uploads/.gitkeep
+!outputs/.gitkeep
 models/
 *.log
 
@@ -41,6 +43,10 @@ htmlcov/
 .idea/
 *.swp
 *.swo
+
+# AI tooling (Claude Code, Cursor, etc.) — local config, not for VCS
+.claude/
+.cursor/
 
 # OS
 .DS_Store

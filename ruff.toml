@@ -1,0 +1,42 @@
+# Ruff configuration — formatter + linter.
+# Docs: https://docs.astral.sh/ruff/
+
+target-version = "py310"
+line-length = 100
+extend-exclude = [
+    ".venv",
+    "build",
+    "dist",
+    "transcriptor.egg-info",
+    "uploads",
+    "outputs",
+]
+
+[lint]
+# Conservative ruleset: catches real bugs without imposing aesthetic taste.
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes (undefined names, unused imports)
+    "I",    # isort
+    "B",    # flake8-bugbear (likely bugs)
+    "UP",   # pyupgrade (modern syntax)
+    "C4",   # flake8-comprehensions
+    "SIM",  # flake8-simplify
+    "RUF",  # ruff-specific
+    "TID",  # tidy imports
+    "PTH",  # use pathlib over os.path
+]
+ignore = [
+    "E501",   # line too long — formatter handles this; ignore for long URLs/strings
+    "B008",   # function call in default arg — FastAPI uses this (Depends, File, Form)
+    "SIM108", # ternary instead of if/else — sometimes the if/else reads better
+]
+
+[lint.per-file-ignores]
+"tests/*" = ["S101"]  # asserts are how pytest works
+
+[format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"

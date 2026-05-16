@@ -1,8 +1,26 @@
 [project]
 name = "transcriptor"
-version = "0.1.0"
-description = "Web app local para transcricao de videos/audios em pt-br usando faster-whisper"
+version = "0.3.0"
+description = "Local web app for transcribing video/audio in pt-br using faster-whisper. 100% offline."
+readme = "README.md"
+license = { file = "LICENSE" }
 requires-python = ">=3.10"
+authors = [
+    { name = "Jamesson Felipe" },
+]
+keywords = ["transcription", "whisper", "speech-to-text", "diarization", "local-first"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+]
 dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.32",
@@ -10,11 +28,29 @@ dependencies = [
     "faster-whisper>=1.0",
     "pyannote.audio>=4.0",
     "python-dotenv>=1.0",
-    # torch/torchaudio acompanham a versao mais recente do pyannote 4.x
+    # torch/torchaudio acompanham a versão mais recente do pyannote 4.x
     "torch>=2.6",
     "torchaudio>=2.6",
     "huggingface_hub>=0.26",
+    "requests>=2.31",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "pytest-cov>=5.0",
+    "httpx>=0.27",        # FastAPI TestClient
+    "ruff>=0.6",
+    "mypy>=1.10",
+    "types-requests",
+]
+
+[project.urls]
+Homepage = "https://github.com/jamessonfelipe/transcriptor"
+Repository = "https://github.com/jamessonfelipe/transcriptor"
+Changelog = "https://github.com/jamessonfelipe/transcriptor/blob/main/CHANGELOG.md"
+Issues = "https://github.com/jamessonfelipe/transcriptor/issues"
 
 [build-system]
 requires = ["setuptools>=68"]
@@ -22,3 +58,18 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 packages = ["app"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+]
+filterwarnings = [
+    # Silence pyannote/torchaudio deprecation noise unrelated to our code.
+    "ignore::DeprecationWarning:pyannote.*",
+    "ignore::UserWarning:torchaudio.*",
+]
+asyncio_mode = "auto"
