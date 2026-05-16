@@ -70,7 +70,7 @@ def get_model(
     threads = cpu_threads if cpu_threads is not None else _detect_threads()
     key = (size, device, compute_type, threads, num_workers)
     with _MODEL_LOCK:
-        if _CURRENT_KEY == key and _CURRENT_MODEL is not None:
+        if key == _CURRENT_KEY and _CURRENT_MODEL is not None:
             logger.info("Reusando modelo em cache: %s", size)
             return _CURRENT_MODEL
 
@@ -81,7 +81,11 @@ def get_model(
 
         logger.info(
             "Carregando modelo %s (device=%s, compute=%s, threads=%d, workers=%d)...",
-            size, device, compute_type, threads, num_workers,
+            size,
+            device,
+            compute_type,
+            threads,
+            num_workers,
         )
         _CURRENT_MODEL = WhisperModel(
             size,
@@ -117,7 +121,7 @@ def evict_if_matches(size: ModelSize) -> bool:
 
 def format_timestamp(seconds: float) -> str:
     """Formato SRT: HH:MM:SS,mmm."""
-    ms = int(round(seconds * 1000))
+    ms = round(seconds * 1000)
     h, ms = divmod(ms, 3_600_000)
     m, ms = divmod(ms, 60_000)
     s, ms = divmod(ms, 1000)

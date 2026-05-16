@@ -14,6 +14,7 @@ app num estado bagunçado quando ainda existe um token herdado.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import os
@@ -151,10 +152,9 @@ def _write_file_token(token: str | None) -> None:
         data["hf_token"] = token
     CONFIG_FILE.write_text(json.dumps(data, indent=2), encoding="utf-8")
     # 0600: o token e segredo; ninguem alem do dono deve ler o arquivo.
-    try:
-        os.chmod(CONFIG_FILE, 0o600)
-    except OSError:
-        pass
+    # Windows ignora chmod fora do bit de readonly — suprimimos o erro.
+    with contextlib.suppress(OSError):
+        CONFIG_FILE.chmod(0o600)
 
 
 __all__ = [

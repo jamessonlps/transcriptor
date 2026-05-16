@@ -134,8 +134,7 @@ def get_pipeline() -> Any:
             # o que ele precisa corrigir.
             if "401" in msg or "Unauthorized" in msg.lower():
                 raise DiarizationUnavailable(
-                    "Token Hugging Face invalido. Abra Configuracoes para "
-                    "atualizar o token."
+                    "Token Hugging Face invalido. Abra Configuracoes para atualizar o token."
                 ) from e
             if "403" in msg or "gated" in msg.lower() or "access" in msg.lower():
                 raise DiarizationUnavailable(
@@ -148,6 +147,9 @@ def get_pipeline() -> Any:
             ) from e
 
         # Acelera com Apple Silicon (MPS) ou GPU se disponivel.
+        # ``Pipeline.from_pretrained`` retorna ``Pipeline | None`` segundo o
+        # type stub, mas se chegamos aqui sem excecao, sabemos que e Pipeline.
+        assert pipe is not None
         try:
             import torch
 
@@ -203,7 +205,9 @@ def diarize(audio_path: Path, num_speakers: int | None = None) -> list[SpeakerTu
 
     turns = _extract_turns(output)
     turns.sort(key=lambda t: t.start)
-    logger.info("Diarizacao OK: %d turnos, %d falantes unicos", len(turns), len({t.speaker for t in turns}))
+    logger.info(
+        "Diarizacao OK: %d turnos, %d falantes unicos", len(turns), len({t.speaker for t in turns})
+    )
     return turns
 
 
@@ -238,7 +242,7 @@ def diarize_stream(
         yield {"type": "diarizing"}
         turns = diarize(audio_path, num_speakers=num_speakers)
         assignments = assign_speakers_to_segments(whisper_segments, turns)
-        unique_speakers = sorted({s for s in assignments.values()})
+        unique_speakers = sorted(set(assignments.values()))
         yield {
             "type": "diarization_done",
             "speakers": unique_speakers,

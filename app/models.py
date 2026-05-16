@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from huggingface_hub import HfApi, scan_cache_dir, snapshot_download
+from huggingface_hub import snapshot_download
 from huggingface_hub.utils import (
     GatedRepoError,
     HfHubHTTPError,
@@ -35,6 +35,7 @@ logger = logging.getLogger(__name__)
 
 # ---------- Catálogo ----------
 
+
 @dataclass(frozen=True)
 class ModelSpec:
     """Especificação estática de um modelo (independente de estar baixado ou não)."""
@@ -42,30 +43,72 @@ class ModelSpec:
     key: str
     label: str
     repo_id: str
-    kind: str          # "whisper" | "diarization"
-    size_mb: int       # tamanho aproximado em disco
-    speed_label: str   # "~10x", "~2x"... (relativo a tempo real de áudio)
+    kind: str  # "whisper" | "diarization"
+    size_mb: int  # tamanho aproximado em disco
+    speed_label: str  # "~10x", "~2x"... (relativo a tempo real de áudio)
     description: str
     tag: str | None = None  # "novo", "máx. precisão", etc.
 
 
 WHISPER_MODELS: list[ModelSpec] = [
-    ModelSpec("tiny", "Tiny", "Systran/faster-whisper-tiny", "whisper",
-              75, "~10x", "Mais rápido, qualidade limitada — útil pra testes."),
-    ModelSpec("base", "Base", "Systran/faster-whisper-base", "whisper",
-              140, "~7x", "Compromisso pra notas rápidas de fala clara."),
-    ModelSpec("small", "Small", "Systran/faster-whisper-small", "whisper",
-              460, "~4x", "Boa qualidade pra fala limpa, ainda rápido."),
-    ModelSpec("medium", "Medium", "Systran/faster-whisper-medium", "whisper",
-              1500, "~2x", "Sweet spot pra pt-br — recomendado pra reuniões."),
+    ModelSpec(
+        "tiny",
+        "Tiny",
+        "Systran/faster-whisper-tiny",
+        "whisper",
+        75,
+        "~10x",
+        "Mais rápido, qualidade limitada — útil pra testes.",
+    ),
+    ModelSpec(
+        "base",
+        "Base",
+        "Systran/faster-whisper-base",
+        "whisper",
+        140,
+        "~7x",
+        "Compromisso pra notas rápidas de fala clara.",
+    ),
+    ModelSpec(
+        "small",
+        "Small",
+        "Systran/faster-whisper-small",
+        "whisper",
+        460,
+        "~4x",
+        "Boa qualidade pra fala limpa, ainda rápido.",
+    ),
+    ModelSpec(
+        "medium",
+        "Medium",
+        "Systran/faster-whisper-medium",
+        "whisper",
+        1500,
+        "~2x",
+        "Sweet spot pra pt-br — recomendado pra reuniões.",
+    ),
     # mobiuslabsgmbh republica o turbo em formato CT2 (faster-whisper). O repo
     # original Systran/faster-whisper-large-v3-turbo deixou de existir; este e
     # publico, MIT, ~1M downloads/mes.
-    ModelSpec("large-v3-turbo", "Large v3 Turbo", "mobiuslabsgmbh/faster-whisper-large-v3-turbo",
-              "whisper", 1500, "~3x", "Qualidade próxima do Large v3, ~2x mais rápido."),
-    ModelSpec("large-v3", "Large v3", "Systran/faster-whisper-large-v3", "whisper",
-              3000, "~0.7x", "Máxima precisão. Precisa de ~3 GB de RAM livres.",
-              tag="máx. precisão"),
+    ModelSpec(
+        "large-v3-turbo",
+        "Large v3 Turbo",
+        "mobiuslabsgmbh/faster-whisper-large-v3-turbo",
+        "whisper",
+        1500,
+        "~3x",
+        "Qualidade próxima do Large v3, ~2x mais rápido.",
+    ),
+    ModelSpec(
+        "large-v3",
+        "Large v3",
+        "Systran/faster-whisper-large-v3",
+        "whisper",
+        3000,
+        "~0.7x",
+        "Máxima precisão. Precisa de ~3 GB de RAM livres.",
+        tag="máx. precisão",
+    ),
 ]
 
 DIARIZATION_MODELS: list[ModelSpec] = [
@@ -74,7 +117,8 @@ DIARIZATION_MODELS: list[ModelSpec] = [
         "PyAnnote Speaker Diarization (community-1)",
         "pyannote/speaker-diarization-community-1",
         "diarization",
-        30, "—",
+        30,
+        "—",
         "Identifica falantes diferentes em reuniões e entrevistas.",
     ),
 ]
@@ -91,9 +135,11 @@ def get_spec(key: str) -> ModelSpec:
 
 # ---------- Listagem (estado do cache) ----------
 
+
 def _hf_cache_root() -> Path:
     """Diretório onde o huggingface_hub guarda blobs/snapshots."""
     from huggingface_hub.constants import HF_HUB_CACHE
+
     return Path(HF_HUB_CACHE)
 
 
@@ -130,7 +176,11 @@ def model_status(spec: ModelSpec) -> dict[str, Any]:
         snapshots = repo_dir / "snapshots"
         if snapshots.exists():
             for snap in snapshots.iterdir():
-                if any(snap.glob("*.bin")) or any(snap.glob("*.safetensors")) or any(snap.glob("config.yaml")):
+                if (
+                    any(snap.glob("*.bin"))
+                    or any(snap.glob("*.safetensors"))
+                    or any(snap.glob("config.yaml"))
+                ):
                     downloaded = True
                     break
 
@@ -164,6 +214,7 @@ def list_models() -> dict[str, Any]:
 
 # ---------- Download com progresso ----------
 
+
 class _SilentTqdm:
     """Stub que satisfaz a interface tqdm sem renderizar nada.
 
@@ -186,7 +237,7 @@ class _SilentTqdm:
 
     # huggingface_hub às vezes precisa de um lock estático compartilhado
     @classmethod
-    def get_lock(cls) -> "threading.RLock":
+    def get_lock(cls) -> threading.RLock:
         return cls._lock
 
     @classmethod
@@ -206,11 +257,14 @@ class _SilentTqdm:
         if total is not None:
             self.total = total
         self.n = 0
+
     def set_description(self, desc: str | None = None, **_: Any) -> None:
         if desc is not None:
             self.desc = desc
+
     def set_description_str(self, desc: str | None = None, **_: Any) -> None:
         self.set_description(desc)
+
     def set_postfix(self, *_: Any, **__: Any) -> None: ...
     def set_postfix_str(self, *_: Any, **__: Any) -> None: ...
     def display(self, *_: Any, **__: Any) -> None: ...
@@ -220,7 +274,7 @@ class _SilentTqdm:
     def format_dict(self) -> dict[str, Any]:
         return {"n": self.n, "total": self.total, "elapsed": 0, "rate": 0}
 
-    def __enter__(self) -> "_SilentTqdm":
+    def __enter__(self) -> _SilentTqdm:
         return self
 
     def __exit__(self, *_: Any) -> None:
@@ -228,7 +282,7 @@ class _SilentTqdm:
 
     def __iter__(self) -> Iterator[Any]:
         if self.iterable is None:
-            return iter([])
+            return
         for x in self.iterable:
             yield x
             self.update(1)
@@ -283,8 +337,7 @@ def download_model(key: str, max_workers: int = 4) -> Iterator[dict[str, Any]]:
             s = str(e)
             if "401" in s:
                 error_holder["error"] = (
-                    "Token Hugging Face invalido ou ausente. Abra Configuracoes "
-                    "para corrigir."
+                    "Token Hugging Face invalido ou ausente. Abra Configuracoes para corrigir."
                 )
                 error_holder["kind"] = "no_token"
             elif "403" in s:
@@ -321,7 +374,7 @@ def download_model(key: str, max_workers: int = 4) -> Iterator[dict[str, Any]]:
             last_bytes = cur_bytes
             last_change = time.monotonic()
         now = time.monotonic()
-        # Throttle: emite no máximo 4× por segundo.
+        # Throttle: emite no maximo 4x por segundo.
         if now - last_emit < 0.25:
             continue
         last_emit = now
@@ -354,6 +407,7 @@ def download_model(key: str, max_workers: int = 4) -> Iterator[dict[str, Any]]:
 
 # ---------- Delete ----------
 
+
 def delete_model(key: str) -> dict[str, Any]:
     """Remove o cache de um modelo. Evicta também do _CURRENT_MODEL em RAM
     quando aplicável (senão o disco aparenta vazio mas a RAM ainda segura o
@@ -379,21 +433,22 @@ def delete_model(key: str) -> dict[str, Any]:
 
 # ---------- Sanity check (usado pra startup logs) ----------
 
+
 def summary_line() -> str:
     state = list_models()
     counts = sum(1 for m in state["whisper"] if m["downloaded"])
-    total_gb = state["total_bytes"] / (1024 ** 3)
+    total_gb = state["total_bytes"] / (1024**3)
     return f"{counts}/{len(WHISPER_MODELS)} modelos Whisper em cache · {total_gb:.2f} GB total"
 
 
 __all__ = [
     "ALL_MODELS",
-    "WHISPER_MODELS",
     "DIARIZATION_MODELS",
+    "WHISPER_MODELS",
     "ModelSpec",
+    "delete_model",
+    "download_model",
     "get_spec",
     "list_models",
-    "download_model",
-    "delete_model",
     "summary_line",
 ]
