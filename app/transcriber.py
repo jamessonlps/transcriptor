@@ -29,6 +29,92 @@ _CURRENT_KEY: tuple[str, str, str, int, int] | None = None
 _MODEL_LOCK = Lock()
 
 
+@dataclass(frozen=True)
+class DeviceInfo:
+    """Onde a inferência vai rodar — resolvido na ordem env > autodetect.
+
+    Note que ``faster-whisper`` é CTranslate2: suporta APENAS cpu/cuda.
+    MPS (Apple Silicon) NÃO é suportado e é deliberadamente ignorado aqui
+    — o ganho de GPU no Mac viria via mlx-whisper ou whisper.cpp.
+    """
+
+    device: str  # "cpu" | "cuda"
+    compute_type: str  # "int8" | "int8_float16" | "float16" | "float32"
+    gpu_name: str | None = None  # nome legível da GPU se device=="cuda"
+    reason: str = ""  # explicação curta pra debugging/UI
+
+
+def _probe_cuda() -> tuple[bool, str | None]:
+    """Verifica se há CUDA utilizável. Retorna (disponível, nome_da_gpu)."""
+    try:
+        import torch
+
+        if torch.cuda.is_available() and torch.cuda.device_count() > 0:
+            try:
+                name = torch.cuda.get_device_name(0)
+            except Exception:
+                name = "CUDA device"
+            return True, name
+    except Exception as e:
+        logger.debug("Probe CUDA falhou: %s", e)
+    return False, None
+
+
+def detect_device() -> DeviceInfo:
+    """Resolve device e compute_type pra inferência.
+
+    Ordem de precedência:
+      1. ``TRANSCRIPTOR_DEVICE`` no env (``cpu`` ou ``cuda``)
+      2. CUDA disponível → ``cuda`` + ``float16`` por padrão
+      3. Fallback ``cpu`` + ``int8``
+
+    ``TRANSCRIPTOR_COMPUTE`` permite override do compute_type
+    (útil pra GPUs com pouca VRAM: ``int8_float16`` em vez de ``float16``).
+    """
+    forced_device = os.environ.get("TRANSCRIPTOR_DEVICE", "").strip().lower()
+    forced_compute = os.environ.get("TRANSCRIPTOR_COMPUTE", "").strip().lower()
+
+    if forced_device == "cuda":
+        ok, name = _probe_cuda()
+        if not ok:
+            logger.warning(
+                "TRANSCRIPTOR_DEVICE=cuda solicitado mas CUDA indisponível. Usando CPU."
+            )
+            return DeviceInfo(
+                device="cpu",
+                compute_type=forced_compute or "int8",
+                reason="cuda solicitado mas não disponível",
+            )
+        return DeviceInfo(
+            device="cuda",
+            compute_type=forced_compute or "float16",
+            gpu_name=name,
+            reason="forçado via TRANSCRIPTOR_DEVICE",
+        )
+
+    if forced_device == "cpu":
+        return DeviceInfo(
+            device="cpu",
+            compute_type=forced_compute or "int8",
+            reason="forçado via TRANSCRIPTOR_DEVICE",
+        )
+
+    ok, name = _probe_cuda()
+    if ok:
+        return DeviceInfo(
+            device="cuda",
+            compute_type=forced_compute or "float16",
+            gpu_name=name,
+            reason="CUDA detectada automaticamente",
+        )
+
+    return DeviceInfo(
+        device="cpu",
+        compute_type=forced_compute or "int8",
+        reason="CPU (sem CUDA disponível)",
+    )
+
+
 def _detect_threads() -> int:
     """Numero de threads (OpenMP/intra-op) para o CTranslate2.
 
@@ -184,9 +270,23 @@ def transcribe_stream(
         {"type": "error", "message": str}
     """
     try:
-        yield {"type": "loading", "model": model_size}
-        logger.info("Iniciando transcricao: %s (modelo %s)", audio_path.name, model_size)
-        model = get_model(model_size)
+        dev = detect_device()
+        yield {
+            "type": "loading",
+            "model": model_size,
+            "device": dev.device,
+            "compute_type": dev.compute_type,
+            "gpu_name": dev.gpu_name,
+        }
+        logger.info(
+            "Iniciando transcricao: %s (modelo %s, device %s, compute %s%s)",
+            audio_path.name,
+            model_size,
+            dev.device,
+            dev.compute_type,
+            f", gpu={dev.gpu_name}" if dev.gpu_name else "",
+        )
+        model = get_model(model_size, device=dev.device, compute_type=dev.compute_type)
 
         segments_iter, info = model.transcribe(
             str(audio_path),

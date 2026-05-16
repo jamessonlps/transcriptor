@@ -43,6 +43,11 @@ export async function getConfig() {
     return r.json();
 }
 
+export async function getRuntimeInfo() {
+    const r = await _request('/api/runtime');
+    return r.json();
+}
+
 export async function listModels() {
     const r = await _request('/api/models');
     return r.json();

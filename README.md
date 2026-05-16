@@ -67,6 +67,38 @@ Documentação técnica completa em [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE
     - Ubuntu/Debian: `sudo apt install ffmpeg`
     - Windows: baixe em https://ffmpeg.org/download.html
 
+### Aceleração por GPU (opcional)
+
+A app detecta o hardware sozinha. O ícone no canto superior direito mostra
+em tempo real onde a inferência está rodando — clique pra ver detalhes
+(GPU, precisão, motivo).
+
+| OS | Hardware | Transcrição (Whisper) | Diarização (pyannote) |
+|----|----------|----------------------|----------------------|
+| Linux/Windows | NVIDIA + CUDA | **GPU** (auto) | **GPU** (auto) |
+| macOS | Apple Silicon | CPU (CTranslate2 não suporta Metal) | **GPU MPS** (auto) |
+| Qualquer | sem GPU | CPU | CPU |
+
+**Windows/Linux com GPU NVIDIA:** instale o extra `[gpu]` pra puxar as libs
+CUDA sem precisar do CUDA Toolkit do sistema:
+
+```bash
+pip install -e ".[gpu]"
+```
+
+Drivers NVIDIA atualizados são suficientes. Override manual via env:
+
+```bash
+TRANSCRIPTOR_DEVICE=cpu                  # força CPU mesmo com GPU
+TRANSCRIPTOR_DEVICE=cuda                 # exige GPU (falha back pra CPU se ausente)
+TRANSCRIPTOR_COMPUTE=int8_float16        # GPUs com pouca VRAM (<6GB)
+TRANSCRIPTOR_COMPUTE=float16             # default em GPU
+```
+
+**Ganho típico** vs CPU int8 no mesmo modelo `large-v3`:
+- RTX 3060+ com `float16`: **5–10×** mais rápido.
+- RTX 4070+ com `int8_float16`: similar, mas usa **~40% menos VRAM**.
+
 ## Como rodar
 
 ### Modo 1 — Linha de comando

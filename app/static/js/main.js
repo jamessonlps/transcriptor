@@ -8,6 +8,7 @@
 import { register, start } from './router.js';
 import { getConfig } from './api.js';
 import { hydrateIcons } from './components/icons.js';
+import { initRuntimeBadge } from './components/runtime-badge.js';
 import { mount as mountTranscribe } from './views/transcribe.js';
 import { mount as mountSettings } from './views/settings.js';
 import { toast } from './ui.js';
@@ -30,6 +31,9 @@ async function boot() {
 
     const footerYear = document.querySelector('[data-el="footer-year"]');
     if (footerYear) footerYear.textContent = String(new Date().getFullYear());
+
+    // Não bloqueia o resto do boot — o badge popula assincronamente.
+    initRuntimeBadge();
 
     register('/', async (container) => mountTranscribe(container, { config: await fetchConfig() }));
     register('/settings', async (container) => mountSettings(container, { config: await fetchConfig() }));

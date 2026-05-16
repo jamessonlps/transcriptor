@@ -14,6 +14,7 @@ from app.transcriber import (
     Segment,
     TranscriptionResult,
     _detect_threads,
+    detect_device,
     evict_if_matches,
     format_timestamp,
 )
@@ -132,3 +133,82 @@ class TestDetectThreads:
         monkeypatch.delenv("WHISPER_CPU_THREADS", raising=False)
         monkeypatch.setattr("os.cpu_count", lambda: 32)
         assert _detect_threads() == 8
+
+
+class TestDetectDevice:
+    """``detect_device`` resolve env > autodetect > fallback. Cobrimos cada
+    ramo separadamente para que a precedência fique explícita no teste."""
+
+    @staticmethod
+    def _patch_cuda(
+        monkeypatch: pytest.MonkeyPatch, *, available: bool, name: str = "RTX 4060"
+    ) -> None:
+        monkeypatch.setattr(
+            transcriber,
+            "_probe_cuda",
+            lambda: (True, name) if available else (False, None),
+        )
+
+    def test_env_cpu_wins_over_available_cuda(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Mesmo com CUDA disponível, TRANSCRIPTOR_DEVICE=cpu deve ganhar.
+        self._patch_cuda(monkeypatch, available=True)
+        monkeypatch.setenv("TRANSCRIPTOR_DEVICE", "cpu")
+        monkeypatch.delenv("TRANSCRIPTOR_COMPUTE", raising=False)
+        info = detect_device()
+        assert info.device == "cpu"
+        assert info.compute_type == "int8"
+        assert info.gpu_name is None
+
+    def test_env_cuda_with_cuda_available(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        self._patch_cuda(monkeypatch, available=True, name="RTX 4070")
+        monkeypatch.setenv("TRANSCRIPTOR_DEVICE", "cuda")
+        monkeypatch.delenv("TRANSCRIPTOR_COMPUTE", raising=False)
+        info = detect_device()
+        assert info.device == "cuda"
+        assert info.compute_type == "float16"
+        assert info.gpu_name == "RTX 4070"
+
+    def test_env_cuda_without_cuda_falls_back_to_cpu(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Pediu CUDA mas o hardware não tem — log warning + degrada pra CPU
+        # em vez de explodir no carregamento do modelo.
+        self._patch_cuda(monkeypatch, available=False)
+        monkeypatch.setenv("TRANSCRIPTOR_DEVICE", "cuda")
+        monkeypatch.delenv("TRANSCRIPTOR_COMPUTE", raising=False)
+        info = detect_device()
+        assert info.device == "cpu"
+        assert info.compute_type == "int8"
+
+    def test_autodetect_cuda_when_available(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        self._patch_cuda(monkeypatch, available=True, name="A100")
+        monkeypatch.delenv("TRANSCRIPTOR_DEVICE", raising=False)
+        monkeypatch.delenv("TRANSCRIPTOR_COMPUTE", raising=False)
+        info = detect_device()
+        assert info.device == "cuda"
+        assert info.compute_type == "float16"
+        assert info.gpu_name == "A100"
+
+    def test_autodetect_cpu_when_no_cuda(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        self._patch_cuda(monkeypatch, available=False)
+        monkeypatch.delenv("TRANSCRIPTOR_DEVICE", raising=False)
+        monkeypatch.delenv("TRANSCRIPTOR_COMPUTE", raising=False)
+        info = detect_device()
+        assert info.device == "cpu"
+        assert info.compute_type == "int8"
+        assert info.gpu_name is None
+
+    def test_compute_type_override(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        # Usuário com pouca VRAM pode forçar int8_float16 mesmo com CUDA.
+        self._patch_cuda(monkeypatch, available=True)
+        monkeypatch.delenv("TRANSCRIPTOR_DEVICE", raising=False)
+        monkeypatch.setenv("TRANSCRIPTOR_COMPUTE", "int8_float16")
+        info = detect_device()
+        assert info.device == "cuda"
+        assert info.compute_type == "int8_float16"

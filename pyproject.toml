@@ -45,6 +45,14 @@ dev = [
     "mypy>=1.10",
     "types-requests",
 ]
+# Aceleração CUDA pra Whisper (Linux/Windows com GPU NVIDIA).
+# Linux: pip install -e ".[gpu]" puxa cuBLAS + cuDNN via pip (sem precisar
+# instalar o CUDA Toolkit do sistema). macOS NÃO é suportado: CTranslate2
+# não tem backend Metal/MPS.
+gpu = [
+    "nvidia-cublas-cu12",
+    "nvidia-cudnn-cu12>=9",
+]
 
 [project.urls]
 Homepage = "https://github.com/jamessonfelipe/transcriptor"

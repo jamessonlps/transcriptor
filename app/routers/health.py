@@ -12,6 +12,7 @@ from typing import Any
 from fastapi import APIRouter
 
 from app import __version__, token_store
+from app.services.runtime_info import get_runtime_info
 
 router = APIRouter(tags=["health"])
 
@@ -38,3 +39,14 @@ def config() -> dict[str, Any]:
         "models": sorted(ALLOWED_MODELS),
         "version": __version__,
     }
+
+
+@router.get("/api/runtime")
+def runtime() -> dict[str, Any]:
+    """Como/onde a próxima inferência vai rodar.
+
+    Consumido pelo badge no header da UI. Reflete o estado prospectivo:
+    o que ``transcribe_stream`` e ``diarizer.get_pipeline`` decidiriam
+    se chamados agora — sem carregar modelo.
+    """
+    return get_runtime_info()

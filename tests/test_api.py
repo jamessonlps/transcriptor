@@ -81,6 +81,31 @@ class TestConfig:
         assert r.json()["version"] == __version__
 
 
+class TestRuntime:
+    """``/api/runtime`` é consumido pelo badge da UI. O contrato é:
+    dois sub-objetos (transcription + diarization), cada um com `device`
+    string, mais um bloco de `platform`. Não dependemos do hardware da CI."""
+
+    def test_shape(self, client: TestClient) -> None:
+        r = client.get("/api/runtime")
+        assert r.status_code == 200
+        data = r.json()
+        assert set(data.keys()) >= {"platform", "transcription", "diarization"}
+        assert data["transcription"]["device"] in {"cpu", "cuda"}
+        assert data["transcription"]["compute_type"]
+        assert data["diarization"]["device"] in {"cpu", "cuda", "mps"}
+        assert data["platform"]["system"]
+
+    def test_respects_env_override(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Forçando CPU via env, mesmo que a máquina tivesse CUDA o endpoint
+        # deveria reportar cpu — comportamento estável pra docs/screenshots.
+        monkeypatch.setenv("TRANSCRIPTOR_DEVICE", "cpu")
+        r = client.get("/api/runtime")
+        assert r.json()["transcription"]["device"] == "cpu"
+
+
 class TestHfStatus:
     def test_no_token_configured(self, client: TestClient) -> None:
         r = client.get("/api/hf/status")
