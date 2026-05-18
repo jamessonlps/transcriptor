@@ -6,7 +6,7 @@ readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
 authors = [
-    { name = "Jamesson Felipe" },
+    { name = "Jamesson Leandro" },
 ]
 keywords = ["transcription", "whisper", "speech-to-text", "diarization", "local-first"]
 classifiers = [
@@ -55,10 +55,10 @@ gpu = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/jamessonfelipe/transcriptor"
-Repository = "https://github.com/jamessonfelipe/transcriptor"
-Changelog = "https://github.com/jamessonfelipe/transcriptor/blob/main/CHANGELOG.md"
-Issues = "https://github.com/jamessonfelipe/transcriptor/issues"
+Homepage = "https://github.com/jamessonlps/transcriptor"
+Repository = "https://github.com/jamessonlps/transcriptor"
+Changelog = "https://github.com/jamessonlps/transcriptor/blob/main/CHANGELOG.md"
+Issues = "https://github.com/jamessonlps/transcriptor/issues"
 
 [build-system]
 requires = ["setuptools>=68"]

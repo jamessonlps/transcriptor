@@ -4,7 +4,7 @@
 > machine — nothing leaves your computer. FastAPI + faster-whisper +
 > pyannote, with live streaming and optional speaker identification.
 
-[![CI](https://github.com/jamessonfelipe/transcriptor/actions/workflows/ci.yml/badge.svg)](https://github.com/jamessonfelipe/transcriptor/actions/workflows/ci.yml)
+[![CI](https://github.com/jamessonlps/transcriptor/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jamessonlps/transcriptor/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![100% local](https://img.shields.io/badge/100%25-local-success)](#)

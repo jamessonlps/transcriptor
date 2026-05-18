@@ -5,7 +5,7 @@ Thanks for your interest in improving Transcriptor.
 ## Quick start
 
 ```bash
-git clone https://github.com/jamessonfelipe/transcriptor.git
+git clone https://github.com/jamessonlps/transcriptor.git
 cd transcriptor
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
