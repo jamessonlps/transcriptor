@@ -6,6 +6,8 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+
 if ! command -v ffmpeg >/dev/null 2>&1; then
     echo "ERRO: ffmpeg nao encontrado."
     echo "  macOS:  brew install ffmpeg"
